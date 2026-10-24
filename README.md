@@ -1,49 +1,43 @@
-# StayGo 
+# StayGo
 
-StayGo is a Flutter hotel discovery app. Browse places to stay, compare hotel details, save favorites, and set up a personal travel profile. The same project supports Android and iOS.
+StayGo is a hotel discovery app built with Flutter. It helps travelers explore accommodation options, compare hotel information, and save places they like in one convenient interface.
 
-## What works now
+## Features
 
-- **Discover:** Explore a sample catalog of hotels with images, ratings, locations and prices per night.
-- **Search & filter:** Find a hotel by name/location and browse Beach, Resort, City or Nature categories.
-- **Two catalog layouts:** Switch between a scrollable list and a two-column grid.
-- **Hotel details:** View photos, descriptions, ratings, amenities and prices. Save a hotel using the bookmark button.
-- **Favorites:** Add or remove hotels; the saved list stays in sync when changing screens.
-- **Profile setup:** Register with name, email, password, confirmation, Terms checkbox and a role. Form errors appear as you type and on submission.
-- **Gestures:** Pull down to simulate loading a new hotel (1.5-second delay). In list mode, swipe left on a hotel to remove it and use **UNDO** to restore it. If all hotels are removed, choose **Reset Catalog**.
-- **Navigation:** Use Explore, Favorites and Profile tabs. Hotel detail screens have a top and in-page back button.
+- **Hotel discovery:** Browse a sample catalog with hotel photos, locations, ratings, and nightly prices.
+- **Search and categories:** Search by hotel name or location, and explore Beach, Resort, City, and Nature categories.
+- **Hotel details:** View photos, descriptions, amenities, ratings, and price information.
+- **Favorites:** Bookmark hotels and manage saved places across screens.
+- **Profile:** Create a temporary travel profile using a registration form with field validation.
+- **Flexible catalog:** Switch between a two-column grid and a scrolling list.
+- **Catalog interactions:** Pull to refresh, swipe to remove a hotel in list mode, undo removal, or reset the catalog.
+- **Booking preview:** Open an informational preview from the Book Now button.
 
-The **Book now** action currently opens an informational booking preview. Payments, real reservations, account authentication and cloud data are **not** implemented yet. Profile, favorites and catalog changes live in memory and reset when the app restarts. Hotel images load online and show a placeholder when offline.
+## Main Screens
 
-## Planned features (for the final stage)
+- **Explore:** Hotel cards, search, category filters, and grid/list controls.
+- **Hotel Details:** Large hotel image, information, amenities, favorite action, and booking preview.
+- **Favorites:** Hotels saved by the user.
+- **Profile & Registration:** Personal details and a validated account form.
 
-These **three features are plans only**. They are not implemented in the current version and will be added near the end of the project.
+## Flutter Implementation
 
-1. **Smart Hotel Match** — Help users find hotels that suit their budget, guest count, and preferred amenities. Display a simple match percentage based on the selected filters.
-2. **Group Trip Voting** — Let friends create a poll with a few hotel options, vote, and see which hotel the group prefers.
-3. **Split Stay Cost** — Calculate the total stay cost using the nightly rate and number of nights, then split the amount between travelers.
+- `Column`, `Row`, `Card`, and `Expanded` organize the main layouts.
+- `Stack` places controls and information over hotel images.
+- `GridView` and `ListView` provide alternative catalog layouts.
+- `StatefulWidget` and `setState()` update interactive parts of the interface.
+- Shared state in the home screen keeps hotel listings, favorites, and profile data synchronized through callbacks.
+- Scrollable and adaptive layouts accommodate different screen sizes.
 
-Other possible later improvements: REST API integration, database storage, BLoC state management and actual booking functionality.
+## Technologies
 
-## Run the app
+- Flutter and Dart
+- Material Design
+- StatefulWidget and setState
+- Navigator
+- Form and input validation
 
-Requirements: Flutter SDK, Dart, and Android Studio or VS Code with the Flutter extension.
-
-```bash
-flutter pub get
-flutter run
-```
-
-For Android, start an emulator or connect a phone with USB debugging enabled. For iOS, an iOS simulator or device with the necessary Apple build tools is required (macOS + Xcode).
-
-### Check the project
-
-```bash
-flutter analyze
-flutter test
-```
-
-## Project structure
+## Project Structure
 
 ```text
 lib/
@@ -68,17 +62,17 @@ lib/
     hotel_image.dart
 ```
 
-The home screen owns the current catalog, saved IDs and profile data. Other screens receive the data and callbacks they need. This keeps the example straightforward and makes it easier to replace the sample data with an API later.
+## Getting Started
 
-## Try it out
+From the project folder, run:
 
-1. Open **Explore**, tap a hotel and check its details.
-2. Tap the bookmark or heart and see the hotel appear in **Favorites**.
-3. Switch between the grid and list using the buttons above the catalog.
-4. Pull down to insert a new item at the start of the catalog.
-5. In list mode, swipe a hotel left, then tap **UNDO** on the message.
-6. Open **Profile** > **Create account**, test the validation messages and fill out the form.
+```bash
+flutter pub get
+flutter run
+```
 
-## Notes
+## Author
 
-All hotel listings and prices are **demonstration data**. They are not live hotel offers. This project is still in active development.
+**Mashat Bekzhan**
+
+> Hotel listings are sample data. Favorites, profile information, and catalog changes are stored in memory; booking is currently a preview.
