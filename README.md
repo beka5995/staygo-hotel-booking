@@ -1,78 +1,95 @@
 # StayGo
 
-StayGo is a hotel discovery app built with Flutter. It helps travelers explore accommodation options, compare hotel information, and save places they like in one convenient interface.
+**StayGo** is a hotel discovery application built with Flutter and Dart. It helps travelers explore accommodation options, compare hotel details, and keep interesting places in one convenient favorites list.
 
 ## Features
 
-- **Hotel discovery:** Browse a sample catalog with hotel photos, locations, ratings, and nightly prices.
-- **Search and categories:** Search by hotel name or location, and explore Beach, Resort, City, and Nature categories.
-- **Hotel details:** View photos, descriptions, amenities, ratings, and price information.
-- **Favorites:** Bookmark hotels and manage saved places across screens.
-- **Profile:** Create a temporary travel profile using a registration form with field validation.
-- **Flexible catalog:** Switch between a two-column grid and a scrolling list.
-- **Catalog interactions:** Pull to refresh, swipe to remove a hotel in list mode, undo removal, or reset the catalog.
-- **Booking preview:** Open an informational preview from the Book Now button.
+- **Hotel discovery:** Browse hotel cards with photos, destinations, ratings, and nightly prices.
+- **Search and filters:** Find hotels by name or location and browse All, Beach, Resort, City, and Nature categories.
+- **Hotel details:** View hotel descriptions, guest ratings, amenities, and prices, with a bookmark button on the main photo.
+- **Favorites:** Save or remove hotels and access them from a dedicated tab.
+- **Catalog layouts:** Switch between a two-column grid and a scrolling list.
+- **Interactive catalog:** Pull to refresh to add a sample hotel, swipe left in list mode to remove a listing, restore it with **UNDO**, or use **Reset Catalog**.
+- **Travel profile:** Complete a registration form with name, email, password confirmation, account type, and terms acceptance.
+- **Booking preview:** Tap **Book now** to view a hotel summary in a bottom sheet.
 
 ## Main Screens
 
-- **Explore:** Hotel cards, search, category filters, and grid/list controls.
-- **Hotel Details:** Large hotel image, information, amenities, favorite action, and booking preview.
-- **Favorites:** Hotels saved by the user.
-- **Profile & Registration:** Personal details and a validated account form.
+| Screen | Description |
+| --- | --- |
+| **Explore** | Hotel catalog, search bar, category filters, and grid/list toggle. |
+| **Hotel Details** | Photo with bookmark overlay, hotel information, amenity tags, and booking preview. |
+| **Favorites** | Saved hotels with direct access to their detail pages. |
+| **Profile** | Current travel profile or an option to create one. |
+| **Registration** | Input fields, validation messages, role selection, and terms checkbox. |
 
 ## Flutter Implementation
 
-- `Column`, `Row`, `Card`, and `Expanded` organize the main layouts.
-- `Stack` places controls and information over hotel images.
-- `GridView` and `ListView` provide alternative catalog layouts.
-- `StatefulWidget` and `setState()` update interactive parts of the interface.
-- Shared state in the home screen keeps hotel listings, favorites, and profile data synchronized through callbacks.
-- Scrollable and adaptive layouts accommodate different screen sizes.
+- **Layouts:** `Column`, `Row`, `Card`, `Expanded`, `Flexible`, `Stack`, `Wrap`, and scrollable views.
+- **Interactive UI:** `StatefulWidget` and `setState()` for tab selection, favorites, search filters, and display mode.
+- **Catalog widgets:** `GridView.builder`, `ListView.separated`, `RefreshIndicator`, and `Dismissible`.
+- **Navigation:** `NavigationBar`, `IndexedStack`, `Navigator.push`, and `Navigator.pop`.
+- **Forms:** `Form`, `GlobalKey<FormState>`, `TextEditingController`, and field validation.
+- **Reusable components:** Separate widgets for hotel cards, list tiles, and network images.
 
-## Technologies
-
-- Flutter and Dart
-- Material Design
-- StatefulWidget and setState
-- Navigator
-- Form and input validation
+The `HomeScreen` manages the in-memory hotel catalog, favorite IDs, and user profile. Child screens receive data and callbacks to keep the interface synchronized.
 
 ## Project Structure
 
 ```text
 lib/
-  main.dart
-  data/
-    sample_hotels.dart
-  models/
-    hotel.dart
-    user_profile.dart
-  screens/
-    home_screen.dart
-    discover_screen.dart
-    hotel_screen.dart
-    favorites_screen.dart
-    profile_screen.dart
-    registration_screen.dart
-  theme/
-    app_theme.dart
-  widgets/
-    hotel_card.dart
-    hotel_list_tile.dart
-    hotel_image.dart
+├── main.dart                     # Application entry point
+├── data/
+│   └── sample_hotels.dart        # Sample hotel listings
+├── models/
+│   ├── hotel.dart                # Hotel data model
+│   └── user_profile.dart         # User profile model
+├── screens/
+│   ├── home_screen.dart          # Navigation and shared screen state
+│   ├── discover_screen.dart      # Catalog, search, filters, and gestures
+│   ├── hotel_screen.dart         # Hotel details and booking preview
+│   ├── favorites_screen.dart     # Saved hotels
+│   ├── profile_screen.dart       # Profile page
+│   └── registration_screen.dart  # Registration and validation
+├── theme/
+│   └── app_theme.dart            # Colors and theme settings
+└── widgets/
+    ├── hotel_card.dart           # Grid card component
+    ├── hotel_list_tile.dart      # List item component
+    └── hotel_image.dart          # Network image with fallback
+
+test/
+└── widget_test.dart              # Flutter widget tests
+
+android/                          # Android runner
+web/                              # Web runner
+ios/                              # iOS runner
+linux/                            # Linux runner
+macos/                            # macOS runner
+windows/                          # Windows runner
+pubspec.yaml                      # Packages and project configuration
+analysis_options.yaml             # Dart analysis rules
+README.md                         # Project documentation
 ```
 
 ## Getting Started
 
-From the project folder, run:
+With Flutter installed, open the project folder and run:
 
 ```bash
 flutter pub get
 flutter run
 ```
 
+To check the project:
+
+```bash
+flutter analyze
+flutter test
+```
+
+> Hotel listings and prices are demonstration data. Favorites and profiles are kept in memory, and the booking button shows a preview rather than making a real reservation.
+
 ## Author
 
 **Mashat Bekzhan**
-
-> Hotel listings are sample data. Favorites, profile information, and catalog changes are stored in memory; booking is currently a preview.
