@@ -1,4 +1,4 @@
-# StayGo 🏨
+# StayGo 
 
 StayGo is a Flutter hotel discovery app. Browse places to stay, compare hotel details, save favorites, and set up a personal travel profile. The same project supports Android and iOS.
 
