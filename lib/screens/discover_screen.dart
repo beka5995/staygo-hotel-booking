@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import '../providers/cart_provider.dart';
 import 'package:flutter/material.dart';
 import '../models/hotel.dart';
 import '../theme/app_theme.dart';
@@ -185,14 +187,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+
   Widget _buildGrid(List<Hotel> hotels) {
+    final cart = context.watch<CartProvider>();
+
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: GridView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 7, 16, 20),
         itemCount: hotels.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate:
+        const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
@@ -200,50 +206,113 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         ),
         itemBuilder: (context, index) {
           final hotel = hotels[index];
-          return HotelCard(
-            key: ValueKey(hotel.id),
-            hotel: hotel,
-            isFavorite: widget.favoriteIds.contains(hotel.id),
-            onTap: () => widget.onHotelTap(hotel),
-            onFavorite: () => widget.onFavoriteTap(hotel),
+          final inCart = cart.containsHotel(hotel.id);
+
+          return Column(
+            children: [
+              Expanded(
+                child: HotelCard(
+                  key: ValueKey(hotel.id),
+                  hotel: hotel,
+                  isFavorite:
+                  widget.favoriteIds.contains(hotel.id),
+                  onTap: () => widget.onHotelTap(hotel),
+                  onFavorite: () =>
+                      widget.onFavoriteTap(hotel),
+                ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                height: 30,
+                child: OutlinedButton(
+                  onPressed: () => cart.toggleHotel(hotel),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: inCart
+                        ? const Color(0xFFDDF0ED)
+                        : Colors.white,
+                  ),
+                  child: Text(
+                    inCart ? 'Remove from Trip' : 'Add to Trip',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
+
+
   Widget _buildList(List<Hotel> hotels) {
+    final cart = context.watch<CartProvider>();
+
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
         itemCount: hotels.length,
-        separatorBuilder: (_, _) => const Divider(color: Color(0xFFE3EAEC), height: 12),
+        separatorBuilder: (_, _) =>
+        const Divider(height: 12),
         itemBuilder: (context, index) {
           final hotel = hotels[index];
+          final inCart = cart.containsHotel(hotel.id);
+
           return Dismissible(
             key: ValueKey(hotel.id),
             direction: DismissDirection.endToStart,
             background: Container(
-              decoration: BoxDecoration(color: const Color(0xFFC83F47),
-                  borderRadius: BorderRadius.circular(16)),
-              padding: const EdgeInsets.only(right: 24),
               alignment: Alignment.centerRight,
-              child: const Icon(Icons.delete_rounded, color: Colors.white, size: 28),
+              padding: const EdgeInsets.only(right: 24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFC83F47),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.delete_rounded,
+                size: 28,
+                color: Colors.white,
+              ),
             ),
             onDismissed: (_) => widget.onDismiss(hotel),
-            child: HotelListTile(
-              hotel: hotel,
-              isFavorite: widget.favoriteIds.contains(hotel.id),
-              onTap: () => widget.onHotelTap(hotel),
-              onFavorite: () => widget.onFavoriteTap(hotel),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                HotelListTile(
+                  hotel: hotel,
+                  isFavorite:
+                  widget.favoriteIds.contains(hotel.id),
+                  onTap: () => widget.onHotelTap(hotel),
+                  onFavorite: () =>
+                      widget.onFavoriteTap(hotel),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: SizedBox(
+                    width: 155,
+                    height: 32,
+                    child: OutlinedButton(
+                      onPressed: () => cart.toggleHotel(hotel),
+                      child: Text(
+                        inCart ? 'Remove' : 'Add to Trip',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
       ),
     );
   }
+
 
   Widget _buildEmptyState({
     required IconData icon,
