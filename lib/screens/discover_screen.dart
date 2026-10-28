@@ -1,7 +1,9 @@
-import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../models/hotel.dart';
+import '../providers/cart_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/hotel_list_tile.dart';
@@ -32,11 +34,21 @@ class DiscoverScreen extends StatefulWidget {
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
   bool _showGrid = true;
+  bool _refreshing = false;
+
   String _category = 'All';
   String _query = '';
-  final TextEditingController _searchController = TextEditingController();
 
-  static const categories = ['All', 'Beach', 'Resort', 'City', 'Nature'];
+  final TextEditingController _searchController =
+  TextEditingController();
+
+  static const categories = [
+    'All',
+    'Beach',
+    'Resort',
+    'City',
+    'Nature',
+  ];
 
   @override
   void dispose() {
@@ -44,21 +56,55 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     super.dispose();
   }
 
-  List<Hotel> get _visibleHotels => widget.hotels.where((hotel) {
-        final categoryMatch = _category == 'All' || hotel.category == _category;
-        final q = _query.trim().toLowerCase();
-        final searchMatch = q.isEmpty ||
-            hotel.name.toLowerCase().contains(q) ||
-            hotel.city.toLowerCase().contains(q);
-        return categoryMatch && searchMatch;
-      }).toList();
+  List<Hotel> get _visibleHotels {
+    return widget.hotels.where((hotel) {
+      final categoryMatch =
+          _category == 'All' || hotel.category == _category;
+
+      final q = _query.trim().toLowerCase();
+
+      final searchMatch = q.isEmpty ||
+          hotel.name.toLowerCase().contains(q) ||
+          hotel.city.toLowerCase().contains(q);
+
+      return categoryMatch && searchMatch;
+    }).toList();
+  }
 
   void _clearFilters() {
     _searchController.clear();
+
     setState(() {
       _query = '';
       _category = 'All';
     });
+  }
+
+  Future<void> _refreshCatalog() async {
+    if (_refreshing) return;
+
+    setState(() {
+      _refreshing = true;
+    });
+
+    try {
+      await widget.onRefresh();
+
+      if (!mounted) return;
+
+      _searchController.clear();
+
+      setState(() {
+        _query = '';
+        _category = 'All';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -75,36 +121,80 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.hotel_class_rounded, color: AppTheme.teal, size: 26),
+                  const Icon(
+                    Icons.hotel_class_rounded,
+                    color: AppTheme.teal,
+                    size: 26,
+                  ),
                   const SizedBox(width: 6),
-                  const Text('StayGo', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900,
-                      color: AppTheme.navy, letterSpacing: -0.6)),
+                  const Text(
+                    'StayGo',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.navy,
+                      letterSpacing: -0.6,
+                    ),
+                  ),
                   const Spacer(),
-                  const Icon(Icons.location_on_outlined, size: 17, color: AppTheme.teal),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 17,
+                    color: AppTheme.teal,
+                  ),
                   const SizedBox(width: 3),
                   const Flexible(
-                    child: Text('Explore the world', maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.muted, fontSize: 12)),
+                    child: Text(
+                      'Explore the world',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 15),
-              const Text('Find your next stay',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800, color: AppTheme.navy)),
+              const Text(
+                'Find your next stay',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.navy,
+                ),
+              ),
               const SizedBox(height: 4),
-              const Text('Great places, good memories.',
-                  style: TextStyle(color: AppTheme.muted, fontSize: 13)),
+              const Text(
+                'Great places, good memories.',
+                style: TextStyle(
+                  color: AppTheme.muted,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 15),
               TextField(
                 controller: _searchController,
-                onChanged: (value) => setState(() => _query = value),
+                onChanged: (value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: 'Search hotels or destinations',
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.teal),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppTheme.teal,
+                  ),
                   suffixIcon: _query.isNotEmpty
-                      ? IconButton(onPressed: _clearFilters,
-                          tooltip: 'Clear search', icon: const Icon(Icons.close_rounded))
+                      ? IconButton(
+                    onPressed: _clearFilters,
+                    tooltip: 'Clear search',
+                    icon: const Icon(
+                      Icons.close_rounded,
+                    ),
+                  )
                       : null,
                 ),
               ),
@@ -112,87 +202,151 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ],
           ),
         ),
+
         SizedBox(
           height: 37,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ),
             itemCount: categories.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) =>
+            const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final item = categories[index];
               final selected = item == _category;
+
               return ChoiceChip(
                 label: Text(item),
                 selected: selected,
                 showCheckmark: false,
-                onSelected: (_) => setState(() => _category = item),
+                onSelected: (_) {
+                  setState(() {
+                    _category = item;
+                  });
+                },
                 selectedColor: const Color(0xFFDCF1EE),
                 labelStyle: TextStyle(
-                  color: selected ? AppTheme.teal : AppTheme.muted,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected
+                      ? AppTheme.teal
+                      : AppTheme.muted,
+                  fontWeight: selected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                   fontSize: 12,
                 ),
-                side: BorderSide(color: selected ? AppTheme.teal : const Color(0xFFE0E7E9)),
-                padding: const EdgeInsets.symmetric(horizontal: 3),
+                side: BorderSide(
+                  color: selected
+                      ? AppTheme.teal
+                      : const Color(0xFFE0E7E9),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 3,
+                ),
               );
             },
           ),
         ),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
           child: Row(
             children: [
               Expanded(
-                child: Text('Places to stay (${hotels.length})',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800,
-                        color: AppTheme.navy)),
+                child: Text(
+                  'Places to stay (${hotels.length})',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.navy,
+                  ),
+                ),
               ),
+
+              IconButton(
+                tooltip: 'Refresh hotels',
+                onPressed:
+                _refreshing ? null : _refreshCatalog,
+                icon: _refreshing
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Icon(
+                  Icons.refresh_rounded,
+                  color: AppTheme.teal,
+                ),
+              ),
+
               IconButton(
                 tooltip: 'List view',
-                onPressed: () => setState(() => _showGrid = false),
-                icon: Icon(Icons.view_list_rounded,
-                    color: _showGrid ? AppTheme.muted : AppTheme.teal),
+                onPressed: () {
+                  setState(() {
+                    _showGrid = false;
+                  });
+                },
+                icon: Icon(
+                  Icons.view_list_rounded,
+                  color: _showGrid
+                      ? AppTheme.muted
+                      : AppTheme.teal,
+                ),
               ),
+
               IconButton(
                 tooltip: 'Grid view',
-                onPressed: () => setState(() => _showGrid = true),
-                icon: Icon(Icons.grid_view_rounded,
-                    color: _showGrid ? AppTheme.teal : AppTheme.muted),
+                onPressed: () {
+                  setState(() {
+                    _showGrid = true;
+                  });
+                },
+                icon: Icon(
+                  Icons.grid_view_rounded,
+                  color: _showGrid
+                      ? AppTheme.teal
+                      : AppTheme.muted,
+                ),
               ),
             ],
           ),
         ),
+
         Expanded(
           child: noCatalog
               ? _buildEmptyState(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Catalog is Empty',
-                  message: 'All hotels have been removed.',
-                  button: 'Reset Catalog',
-                  onPressed: widget.onReset,
-                )
+            icon: Icons.inventory_2_outlined,
+            title: 'Catalog is Empty',
+            message: 'All hotels have been removed.',
+            button: 'Reset Catalog',
+            onPressed: widget.onReset,
+          )
               : hotels.isEmpty
-                  ? _buildEmptyState(
-                      icon: Icons.search_off_rounded,
-                      title: 'No hotels found',
-                      message: 'Try another name or category.',
-                      button: 'Clear filters',
-                      onPressed: _clearFilters,
-                    )
-                  : _showGrid ? _buildGrid(hotels) : _buildList(hotels),
+              ? _buildEmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'No hotels found',
+            message: 'Try another name or category.',
+            button: 'Clear filters',
+            onPressed: _clearFilters,
+          )
+              : _showGrid
+              ? _buildGrid(hotels)
+              : _buildList(hotels),
         ),
       ],
     );
   }
 
-
   Widget _buildGrid(List<Hotel> hotels) {
     final cart = context.watch<CartProvider>();
 
     return RefreshIndicator(
-      onRefresh: widget.onRefresh,
+      onRefresh: _refreshCatalog,
       child: GridView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 7, 16, 20),
@@ -234,7 +388,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         : Colors.white,
                   ),
                   child: Text(
-                    inCart ? 'Remove from Trip' : 'Add to Trip',
+                    inCart
+                        ? 'Remove from Trip'
+                        : 'Add to Trip',
                     style: const TextStyle(fontSize: 11),
                   ),
                 ),
@@ -246,13 +402,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-
-
   Widget _buildList(List<Hotel> hotels) {
     final cart = context.watch<CartProvider>();
 
     return RefreshIndicator(
-      onRefresh: widget.onRefresh,
+      onRefresh: _refreshCatalog,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
@@ -297,7 +451,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     width: 155,
                     height: 32,
                     child: OutlinedButton(
-                      onPressed: () => cart.toggleHotel(hotel),
+                      onPressed: () =>
+                          cart.toggleHotel(hotel),
                       child: Text(
                         inCart ? 'Remove' : 'Add to Trip',
                         style: const TextStyle(fontSize: 11),
@@ -313,7 +468,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-
   Widget _buildEmptyState({
     required IconData icon,
     required String title,
@@ -327,15 +481,33 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 64, color: AppTheme.muted),
+            Icon(
+              icon,
+              size: 64,
+              color: AppTheme.muted,
+            ),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontSize: 20,
-                fontWeight: FontWeight.w800, color: AppTheme.navy)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.navy,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(message, textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.muted)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.muted,
+              ),
+            ),
             const SizedBox(height: 18),
-            FilledButton(onPressed: onPressed, child: Text(button)),
+            FilledButton(
+              onPressed: onPressed,
+              child: Text(button),
+            ),
           ],
         ),
       ),
