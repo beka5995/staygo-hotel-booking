@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/cart_provider.dart';
+import 'data/sample_hotels.dart';
+import 'services/staygo_links.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -23,6 +25,17 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         home: const HomeScreen(),
+        onGenerateRoute: (settings) {
+          final hotelId = hotelIdFromLink(settings.name ?? '');
+          if (hotelId == null ||
+              !sampleHotels.any((hotel) => hotel.id == hotelId)) {
+            return null;
+          }
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => HomeScreen(initialHotelId: hotelId),
+          );
+        },
       ),
     );
   }

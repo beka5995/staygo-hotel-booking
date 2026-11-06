@@ -33,7 +33,7 @@ class _RegistrationScreenState
   bool _hidePassword = true;
   bool _busy = false;
 
-  String _role = 'Student';
+  String _role = 'Traveler';
 
   @override
   void initState() {
@@ -272,7 +272,7 @@ class _RegistrationScreenState
                       decoration: const InputDecoration(
                         labelText: 'Account type',
                       ),
-                      items: ['Student', 'Teacher', 'Developer']
+                      items: ['Traveler', 'Business traveler', 'Travel planner']
                           .map(
                             (role) => DropdownMenuItem(
                           value: role,
@@ -282,7 +282,7 @@ class _RegistrationScreenState
                           .toList(),
                       onChanged: (value) {
                         setState(() {
-                          _role = value ?? 'Student';
+                          _role = value ?? 'Traveler';
                         });
                       },
                     ),

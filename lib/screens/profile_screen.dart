@@ -103,64 +103,23 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'Settings',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.navy,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.notifications_none),
-                title: const Text('Notifications'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showInfo(
-                  context,
-                  'Notifications',
-                  'Notification settings will be available soon.',
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: const Text('Help & support'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showInfo(
-                  context,
-                  'Help & support',
-                  'Thanks for trying StayGo!',
-                ),
-              ),
+        const SizedBox(height: 18),
+        ListTile(
+          leading: const Icon(Icons.info_outline_rounded),
+          title: const Text('About StayGo'),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () => showAboutDialog(
+            context: context,
+            applicationName: 'StayGo',
+            applicationVersion: '1.2.0',
+            children: const [
+              Text('Find places to stay, save favorites and plan your next trip.'),
+              SizedBox(height: 10),
+              Text('Location data © OpenStreetMap contributors.'),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  void _showInfo(
-      BuildContext context,
-      String title,
-      String message,
-      ) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -2,25 +2,57 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class HotelImage extends StatelessWidget {
-  const HotelImage({super.key, required this.url, this.height, this.width});
+  const HotelImage({
+    super.key,
+    required this.url,
+    this.height,
+    this.width,
+    this.fallbackAsset,
+    this.fit = BoxFit.cover,
+  });
 
   final String url;
   final double? height;
   final double? width;
+  final String? fallbackAsset;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
+    if (url.isEmpty) return _fallback();
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
+    }
     return Image.network(
       url,
       width: width,
       height: height,
-      fit: BoxFit.cover,
+      fit: fit,
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
-        return _placeholder();
+        return _fallback();
       },
-      errorBuilder: (context, error, stackTrace) => _placeholder(),
+      errorBuilder: (context, error, stackTrace) => _fallback(),
     );
+  }
+
+  Widget _fallback() {
+    if (fallbackAsset != null) {
+      return Image.asset(
+        fallbackAsset!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
+    }
+    return _placeholder();
   }
 
   Widget _placeholder() {

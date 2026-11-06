@@ -31,7 +31,14 @@ class HotelListTile extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(11),
-                child: HotelImage(url: hotel.imageUrl, width: 94, height: 98),
+                child: Hero(tag: 'hotel_image_${hotel.id}', child: HotelImage(
+                    url: hotel.imageUrl,
+                    width: 94,
+                    height: 98,
+                    fallbackAsset: hotel.assetPhotos.isNotEmpty
+                        ? hotel.assetPhotos.first
+                        : null,
+                  )),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -46,14 +53,14 @@ class HotelListTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: AppTheme.muted, fontSize: 12)),
                     const SizedBox(height: 5),
-                    Row(
+                    if (hotel.hasRating) Row(
                       children: [
                         const Icon(Icons.star_rounded, color: Color(0xFFFFB547), size: 17),
                         Text(' ${hotel.rating}', style: const TextStyle(fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 5),
-                    Text('\$${hotel.pricePerNight} / night',
+                    Text(hotel.hasPrice ? '\$${hotel.pricePerNight} / night' : 'View location',
                         style: const TextStyle(color: AppTheme.teal, fontWeight: FontWeight.w800)),
                   ],
                 ),

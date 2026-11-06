@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/hotel.dart';
 import '../providers/cart_provider.dart';
+import '../services/hotel_places_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/hotel_list_tile.dart';
@@ -18,6 +19,12 @@ class DiscoverScreen extends StatefulWidget {
     required this.onRefresh,
     required this.onDismiss,
     required this.onReset,
+    required this.onlineMode,
+    required this.onlineLoading,
+    required this.onlineError,
+    required this.selectedCity,
+    required this.onBrowseCity,
+    required this.onShowFeatured,
   });
 
   final List<Hotel> hotels;
@@ -27,6 +34,12 @@ class DiscoverScreen extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final ValueChanged<Hotel> onDismiss;
   final VoidCallback onReset;
+  final bool onlineMode;
+  final bool onlineLoading;
+  final String? onlineError;
+  final HotelCity selectedCity;
+  final ValueChanged<HotelCity> onBrowseCity;
+  final VoidCallback onShowFeatured;
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -49,6 +62,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     'City',
     'Nature',
   ];
+
+  @override
+  void didUpdateWidget(covariant DiscoverScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onlineMode != widget.onlineMode ||
+        oldWidget.selectedCity.name != widget.selectedCity.name) {
+      _searchController.clear();
+      _query = '';
+      _category = 'All';
+      _showGrid = !widget.onlineMode;
+    }
+  }
 
   @override
   void dispose() {
@@ -204,6 +229,34 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         ),
 
         SizedBox(
+          height: 43,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: const Text('Featured'),
+                  selected: !widget.onlineMode,
+                  onSelected: (_) => widget.onShowFeatured(),
+                ),
+              ),
+              for (final city in hotelCities)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(city.name),
+                    selected: widget.onlineMode &&
+                        city.name == widget.selectedCity.name,
+                    onSelected: (_) => widget.onBrowseCity(city),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        if (!widget.onlineMode) SizedBox(
           height: 37,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -248,6 +301,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             },
           ),
         ),
+
+        if (widget.onlineMode && widget.onlineLoading)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: LinearProgressIndicator(minHeight: 3),
+          ),
 
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
@@ -318,7 +377,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         ),
 
         Expanded(
-          child: noCatalog
+          child: widget.onlineMode && widget.onlineLoading && hotels.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : widget.onlineMode && widget.onlineError != null && hotels.isEmpty
+              ? _buildEmptyState(
+                  icon: Icons.wifi_off_rounded,
+                  title: 'Unable to load hotels',
+                  message: widget.onlineError!,
+                  button: 'Retry Connection',
+                  onPressed: () => widget.onBrowseCity(widget.selectedCity),
+                )
+              : noCatalog && !widget.onlineMode
               ? _buildEmptyState(
             icon: Icons.inventory_2_outlined,
             title: 'Catalog is Empty',
@@ -330,9 +399,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ? _buildEmptyState(
             icon: Icons.search_off_rounded,
             title: 'No hotels found',
-            message: 'Try another name or category.',
-            button: 'Clear filters',
-            onPressed: _clearFilters,
+            message: widget.onlineMode
+                ? 'No matching hotels in this area. Try another city.'
+                : 'Try another name or category.',
+            button: widget.onlineMode ? 'Try again' : 'Clear filters',
+            onPressed: widget.onlineMode
+                ? () => widget.onBrowseCity(widget.selectedCity)
+                : _clearFilters,
           )
               : _showGrid
               ? _buildGrid(hotels)
@@ -345,125 +418,145 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Widget _buildGrid(List<Hotel> hotels) {
     final cart = context.watch<CartProvider>();
 
-    return RefreshIndicator(
-      onRefresh: _refreshCatalog,
-      child: GridView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 7, 16, 20),
-        itemCount: hotels.length,
-        gridDelegate:
-        const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.72,
-        ),
-        itemBuilder: (context, index) {
-          final hotel = hotels[index];
-          final inCart = cart.containsHotel(hotel.id);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.clamp(0.0, 1240.0);
+        final columns = width >= 980 ? 4 : width >= 660 ? 3 : 2;
 
-          return Column(
-            children: [
-              Expanded(
-                child: HotelCard(
-                  key: ValueKey(hotel.id),
-                  hotel: hotel,
-                  isFavorite:
-                  widget.favoriteIds.contains(hotel.id),
-                  onTap: () => widget.onHotelTap(hotel),
-                  onFavorite: () =>
-                      widget.onFavoriteTap(hotel),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1240),
+            child: RefreshIndicator(
+              onRefresh: _refreshCatalog,
+              child: GridView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 7, 16, 20),
+                itemCount: hotels.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: columns >= 3 ? 0.82 : 0.72,
                 ),
+                itemBuilder: (context, index) {
+                  final hotel = hotels[index];
+                  final inCart = cart.containsHotel(hotel.id);
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: HotelCard(
+                          key: ValueKey(hotel.id),
+                          hotel: hotel,
+                          isFavorite: widget.favoriteIds.contains(hotel.id),
+                          onTap: () => widget.onHotelTap(hotel),
+                          onFavorite: () => widget.onFavoriteTap(hotel),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 30,
+                        child: OutlinedButton(
+                          onPressed: hotel.hasPrice
+                              ? () => cart.toggleHotel(hotel)
+                              : () => widget.onHotelTap(hotel),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            backgroundColor: inCart
+                                ? const Color(0xFFDDF0ED)
+                                : Colors.white,
+                          ),
+                          child: Text(
+                            !hotel.hasPrice
+                                ? 'View details'
+                                : inCart
+                                    ? 'Remove from Trip'
+                                    : 'Add to Trip',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                height: 30,
-                child: OutlinedButton(
-                  onPressed: () => cart.toggleHotel(hotel),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: inCart
-                        ? const Color(0xFFDDF0ED)
-                        : Colors.white,
-                  ),
-                  child: Text(
-                    inCart
-                        ? 'Remove from Trip'
-                        : 'Add to Trip',
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildList(List<Hotel> hotels) {
     final cart = context.watch<CartProvider>();
 
-    return RefreshIndicator(
-      onRefresh: _refreshCatalog,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-        itemCount: hotels.length,
-        separatorBuilder: (_, _) =>
-        const Divider(height: 12),
-        itemBuilder: (context, index) {
-          final hotel = hotels[index];
-          final inCart = cart.containsHotel(hotel.id);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 950),
+        child: RefreshIndicator(
+          onRefresh: _refreshCatalog,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+            itemCount: hotels.length,
+            separatorBuilder: (_, _) => const Divider(height: 12),
+            itemBuilder: (context, index) {
+              final hotel = hotels[index];
+              final inCart = cart.containsHotel(hotel.id);
 
-          return Dismissible(
-            key: ValueKey(hotel.id),
-            direction: DismissDirection.endToStart,
-            background: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 24),
-              decoration: BoxDecoration(
-                color: const Color(0xFFC83F47),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.delete_rounded,
-                size: 28,
-                color: Colors.white,
-              ),
-            ),
-            onDismissed: (_) => widget.onDismiss(hotel),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                HotelListTile(
-                  hotel: hotel,
-                  isFavorite:
-                  widget.favoriteIds.contains(hotel.id),
-                  onTap: () => widget.onHotelTap(hotel),
-                  onFavorite: () =>
-                      widget.onFavoriteTap(hotel),
-                ),
-                Align(
+              return Dismissible(
+                key: ValueKey(hotel.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
                   alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    width: 155,
-                    height: 32,
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          cart.toggleHotel(hotel),
-                      child: Text(
-                        inCart ? 'Remove' : 'Add to Trip',
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                    ),
+                  padding: const EdgeInsets.only(right: 24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC83F47),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.delete_rounded,
+                    size: 28,
+                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+                onDismissed: (_) => widget.onDismiss(hotel),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    HotelListTile(
+                      hotel: hotel,
+                      isFavorite: widget.favoriteIds.contains(hotel.id),
+                      onTap: () => widget.onHotelTap(hotel),
+                      onFavorite: () => widget.onFavoriteTap(hotel),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: SizedBox(
+                        width: 155,
+                        height: 32,
+                        child: OutlinedButton(
+                          onPressed: hotel.hasPrice
+                              ? () => cart.toggleHotel(hotel)
+                              : () => widget.onHotelTap(hotel),
+                          child: Text(
+                            !hotel.hasPrice
+                                ? 'View details'
+                                : inCart
+                                    ? 'Remove'
+                                    : 'Add to Trip',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

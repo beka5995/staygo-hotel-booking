@@ -31,7 +31,45 @@ class HotelCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  HotelImage(url: hotel.imageUrl),
+                  Hero(tag: 'hotel_image_${hotel.id}', child: HotelImage(
+                    url: hotel.imageUrl,
+                    fallbackAsset: hotel.assetPhotos.isNotEmpty
+                        ? hotel.assetPhotos.first
+                        : null,
+                  )),
+                  if (hotel.gallery.length > 1)
+                    Positioned(
+                      left: 8,
+                      bottom: 8,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.photo_library_outlined,
+                                  size: 13, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${hotel.gallery.length} photos',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     top: 8,
                     left: 8,
@@ -89,14 +127,16 @@ class HotelCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '\$${hotel.pricePerNight} / night',
+                          hotel.hasPrice ? '\$${hotel.pricePerNight} / night' : 'View location',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.teal),
                         ),
                       ),
-                      const Icon(Icons.star_rounded, color: Color(0xFFFFB547), size: 15),
-                      Text('${hotel.rating}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      if (hotel.hasRating) ...[
+                        const Icon(Icons.star_rounded, color: Color(0xFFFFB547), size: 15),
+                        Text('${hotel.rating}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
                     ],
                   ),
                 ],

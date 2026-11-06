@@ -9,7 +9,11 @@ class Hotel {
     required this.description,
     required this.category,
     required this.amenities,
-    this.reviewCount = 120,
+    this.reviewCount = 0,
+    this.photos = const [],
+    this.assetPhotos = const [],
+    this.address,
+    this.sourceUrl,
   });
 
   final String id;
@@ -22,6 +26,19 @@ class Hotel {
   final String category;
   final List<String> amenities;
   final int reviewCount;
+  final List<String> photos;
+  final List<String> assetPhotos;
+  final String? address;
+  final String? sourceUrl;
+
+  bool get hasPrice => pricePerNight > 0;
+  bool get hasRating => rating > 0 && reviewCount > 0;
+  bool get isLocalListing => sourceUrl == null;
+  List<String> get gallery => assetPhotos.isNotEmpty
+      ? assetPhotos
+      : (photos.isNotEmpty
+          ? photos
+          : (imageUrl.isEmpty ? const [] : [imageUrl]));
 
   Hotel copyWith({String? id, String? name}) {
     return Hotel(
@@ -35,6 +52,10 @@ class Hotel {
       category: category,
       amenities: amenities,
       reviewCount: reviewCount,
+      photos: photos,
+      assetPhotos: assetPhotos,
+      address: address,
+      sourceUrl: sourceUrl,
     );
   }
 }

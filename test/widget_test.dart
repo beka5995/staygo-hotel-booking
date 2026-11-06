@@ -39,7 +39,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hotel details'), findsOneWidget);
-    expect(find.text('Book now'), findsOneWidget);
+    expect(find.text('Share hotel'), findsNothing);
+    expect(find.byTooltip('Share hotel'), findsOneWidget);
     expect(find.text('Add to Trip'), findsOneWidget);
 
     final backButton = find.text('Back to hotels');
