@@ -1,31 +1,29 @@
-# StayGo source verification
+# Source and runtime verification — 8 November 2026
 
-This document describes changes to the source package and checks that still need an installed Flutter SDK or emulator.
+## Changes
 
-## Source improvements
+One network-backed catalog replaces the bundled featured hotels and Overpass fallback. Provider Trip List, favorites, registration, city selection, list/grid, refresh, swipe/UNDO, empty reset, details, gallery and deep links are integrated. A new AI-generated StayGo hero is included. No GitHub repository was changed.
 
-- Existing navigation, local sign-in/registration, SQLite, favorites, grid/list catalog, swipe/remove/undo, refresh, and Provider-backed Trip List kept in place.
-- Hotel locations are fetched from a less heavily rate-limited Overpass instance. Each city first shows a matching featured stay and keeps it visible when the external server is unavailable. Successful city results are cached for five minutes.
-- Added service-level handling for 200, 404, 429, 5xx, timeouts, invalid JSON and connection failures, with retry in the Explore screen.
-- Added a three-page gallery with PageView.builder, Hero, counter, animated dots, mouse drag, and previous/next arrows. Featured stays use different photo URLs and locally bundled illustrations as offline fallbacks; external listings show three labeled destination illustrations instead of falsely identifying stock photos as the property.
-- Added a share bottom sheet, clipboard copy and a custom staygo://hotel/<id> route for featured hotels.
-- Removed the non-working booking confirmation placeholder and inactive profile settings dialogs.
-- Kept source code and user-facing interface free of instructional labels and the unrelated product marketplace.
-- Added mock-client service tests, gallery and link tests, and updated the existing hotel-detail test for the new button.
+## Completed checks
 
-## Verification in this environment
+- All five city requests returned HTTP 200 with actual hotel names: Istanbul, Astana, Almaty, Dubai and Phuket.
+- A live rates request returned USD rates; the app selects the minimum positive rate and accepts integer/double JSON numbers.
+- The Dart web gateway was actually started and returned HTTP 200 for directory JSON, rates JSON and a property JPEG, with CORS headers for the local Flutter origin and no-store caching. An image request to a non-allowlisted host returned HTTP 400.
+- Dart analyzer checked the gateway, Hotel and HotelRate models: no issues.
+- Flutter **3.47.2 / Dart 3.13.2** was installed for validation. `flutter pub get` succeeded.
+- `flutter analyze`: **No issues found**.
+- `flutter test`: **32 tests passed**. This includes 320×568, 390×844, 800×360 and 1440×900 widget layouts without layout exceptions, refresh, swipe/UNDO, offline/Retry, cart synchronization, gallery, navigation and registration validation.
+- `flutter build web --no-web-resources-cdn`: **succeeded**; Wasm dry run also succeeded.
+- Dart formatter parsed the project's Dart files. Relative/package-local imports, bundled image paths, Android XML, iOS plist and web JSON were checked.
+- Fixed the registration Form to retain every field while scrolling, so submit-time validation checks off-screen fields too.
+- Existing account database schema and bcrypt handling retained; no migration or data deletion added.
 
-- ZIP integrity, archived file inventory, key file presence and token-level Dart delimiter balance: checked.
-- `flutter pub get`, `flutter analyze`, `flutter test`, `flutter build apk`, and emulator interaction: **not run** (Flutter and Android SDK are not installed in this execution environment).
-- Network calls against the real Overpass server: **not run** (outgoing network requests are unavailable here).
-- Shared-link opening on Android/iOS: **not run**, registration and Dart route parsing included.
+## Remaining environment checks
 
-## Manual checks before delivery
+A real Chrome end-to-end run was attempted, but the environment prevents Chrome from creating its required process socket (Operation not permitted). Consequently, browser clicking, web SQLite registration and actual OS airplane-mode events were not verified end to end here. The web build, widget tests and live gateway requests were verified separately. Native Android/iOS builds, device execution and external deep-link opening also remain target-device checks; source configuration is not a device verification.
 
-1. Open in Android Studio and run `flutter pub get` then `flutter analyze` and `flutter test`.
-2. Start the emulator and browse Featured → Hotel Details. Swipe the gallery through 1/3 → 2/3 → 3/3, use Share and Copy, add to Trip List, change nights and return to Explore to verify the live badge.
-3. Tap Phuket or Almaty. Even if the external service fails, a featured stay must stay visible. Open its detail page, verify three images and arrows. Refresh and confirm the screen does not become blank. The dedicated error/retry state is still used if no stays are available at all.
-4. Verify registering, signing out, relaunching and signing in again with SQLite intact.
-5. Run `flutter build apk --debug`. Test a link with ADB as shown in README.md.
+## Local acceptance check
 
-The original rubric's fixed Fake Store endpoint and product-specific UI have not been implemented because the requested application is hotel-focused; if assessment requires that exact endpoint, it must be addressed separately. External hotel records contain no verified booking prices or room photos.
+Run `check_project.ps1`, then `run_web.ps1` in PowerShell. Inspect Explore → List/Grid → pull-to-refresh → swipe/UNDO → remove all/reset. Open a stay, navigate gallery, copy Share link, save a favorite, add to Trip List, change nights and remove it there; check that the Explore toggle updates. Register with both invalid and valid inputs. Disable internet, allow about 12 seconds, check that Explore clears and offers Retry; reconnect and Retry. Also check a narrow phone layout and a wide browser window.
+
+The property API has one photo per record; additional gallery images are labeled travel inspiration. Unknown prices are excluded from the budget. The app does not execute reservations or payments.

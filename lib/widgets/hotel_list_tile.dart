@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/hotel.dart';
 import '../theme/app_theme.dart';
 import 'hotel_image.dart';
@@ -31,14 +32,10 @@ class HotelListTile extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(11),
-                child: Hero(tag: 'hotel_image_${hotel.id}', child: HotelImage(
-                    url: hotel.imageUrl,
-                    width: 94,
-                    height: 98,
-                    fallbackAsset: hotel.assetPhotos.isNotEmpty
-                        ? hotel.assetPhotos.first
-                        : null,
-                  )),
+                child: Hero(
+                  tag: 'hotel_image_${hotel.id}',
+                  child: HotelImage(url: hotel.imageUrl, width: 94, height: 98),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -46,30 +43,64 @@ class HotelListTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(hotel.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    Text(
+                      hotel.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('${hotel.category} • ${hotel.city}', maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.muted, fontSize: 12)),
-                    const SizedBox(height: 5),
-                    if (hotel.hasRating) Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Color(0xFFFFB547), size: 17),
-                        Text(' ${hotel.rating}', style: const TextStyle(fontSize: 12)),
-                      ],
+                    Text(
+                      '${hotel.category} • ${hotel.city}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 5),
-                    Text(hotel.hasPrice ? '\$${hotel.pricePerNight} / night' : 'View location',
-                        style: const TextStyle(color: AppTheme.teal, fontWeight: FontWeight.w800)),
+                    if (hotel.hasRating)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Color(0xFFFFB547),
+                            size: 17,
+                          ),
+                          Text(
+                            ' ${hotel.rating}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 5),
+                    Text(
+                      hotel.hasPrice
+                          ? '${hotel.priceLabel} / night'
+                          : hotel.priceLabel,
+                      style: const TextStyle(
+                        color: AppTheme.teal,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ],
                 ),
               ),
               IconButton(
-                tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                tooltip: isFavorite
+                    ? 'Remove from favorites'
+                    : 'Add to favorites',
                 onPressed: onFavorite,
-                icon: Icon(isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                    color: isFavorite ? Colors.redAccent : AppTheme.muted),
+                icon: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: isFavorite ? Colors.redAccent : AppTheme.muted,
+                ),
               ),
             ],
           ),

@@ -1,73 +1,88 @@
-# StayGo
+# StayGo — HotelBooking
 
-StayGo is a Flutter app for discovering hotels, comparing accommodation details and planning a trip. The same project opens in Android Studio, runs on Android and supports Flutter Web.
+A single Flutter application for discovering hotels and planning a trip. Explore, Favorites, Profile, hotel details and Trip List share the same network-backed hotel objects.
 
-## Explore
+## Run
 
-The **Explore** tab includes six featured stays with photos, descriptions, nightly planning rates and amenities. Search by name or destination, filter by category, switch between grid and list views, save favorites and add featured stays to **Trip List**. A live badge shows the number of hotels selected. Choose nights (1–30), remove individual items or clear the list, and see the total update across screens.
+Requires Flutter with Dart **3.13.2 or newer**, and Chrome or an Android emulator.
 
-Explore also lets you browse locations in **Almaty, Istanbul, Dubai and Phuket**. Tapping a city immediately shows a matching featured stay, while the app checks for additional hotel listings online. A busy or unavailable server does not clear the screen: saved featured stays remain visible. The app caches successful searches in memory for five minutes to avoid unnecessary repeated requests, and pull-to-refresh reloads the city. Featured remains available without a connection.
+**Android**, from the project folder:
 
-Public hotel records generally do not contain reliable room rates, reviews, booking availability or verified photography. To provide a smooth experience, external listings include three **clearly labeled destination illustrations**, not photographs of the actual property. Only featured stays with planning rates can be added to Trip List. Featured stays have three different travel photographs with three distinct locally packaged illustrations as offline fallbacks.
-
-## Hotel details
-
-Every stay has a three-page gallery, an animated page indicator and page counter. On Android you can swipe; in Chrome you can drag with the mouse or use the previous/next arrows. Matching image tags animate between the hotel card and detail page. The **Share** action opens a bottom sheet to copy a link such as `staygo://hotel/ocean`. On Android the custom scheme is registered for opening a featured hotel from outside the app. Hotel locations found through OpenStreetMap share their public OpenStreetMap page.
-
-The featured images and prices are illustrative planning content, **not verified inventory, reservation availability or payment offers**. This app does not make or confirm bookings. The featured gallery photos represent travel destinations rather than verified photos of one real property. Offline illustrations are stored in `assets/stays/`.
-
-## Your account
-
-Profile supports registration, sign-in, sign-out and a local session stored in SQLite. Form validation and the existing bcrypt-based password handling are preserved. Favorites and the trip list are kept in application state; they are not synced with an external booking service.
-
-## Run in Android Studio
-
-1. Extract `StayGo_AndroidStudio_Ready.zip` and open the **StayGo** folder in **Android Studio → Open** (select the folder containing `pubspec.yaml`).
-2. Ensure the Flutter and Dart plugins are installed, and an Android emulator is running.
-3. In the Android Studio terminal, run:
-
-   ```bash
-   flutter pub get
-   flutter run
-   ```
-
-4. For checks and packaging:
-
-   ```bash
-   flutter analyze
-   flutter test
-   flutter build apk --debug
-   flutter build web --release
-   ```
-
-The APK appears in `build/app/outputs/flutter-apk/` after successful build. The ZIP contains **source files**, not a precompiled APK. Android Studio/Flutter will recreate generated files and local SDK paths when you run it.
-
-### Open a shared hotel on Android
-
-With the application installed and the emulator running:
-
-```bash
-adb shell am start -a android.intent.action.VIEW -d "staygo://hotel/ocean"
+```powershell
+flutter pub get
+flutter run
 ```
 
-External opening of links should be tested on the target Android device. iOS scheme registration is included but iOS execution has not been verified.
+**Chrome on Windows** — one command starts a local web gateway and Flutter:
 
-## Technical notes
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run_web.ps1
+```
 
-- Flutter / Dart, Provider, sqflite, bcrypt, http.
-- `HotelPlacesService`: keyless GET request to `https://overpass.private.coffee/api/interpreter`, timeout of 10 seconds, JSON parsing and HTTP error handling. Network responses can vary and this publicly hosted service may be rate-limited or temporarily unavailable. The app requests hotel records only on user action, not repeatedly in the background.
-- HTTP behavior and model parsing can be exercised using `http/testing.dart` mock clients.
-- Featured hotel data lives in `lib/data/sample_hotels.dart` and may be replaced with verified inventory when a booking backend becomes available.
-- Place records © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), Open Database License. Credit can be found under Profile → About StayGo as well as here. Overpass is an external read-only query service.
-- Profile data is local to each device. No online booking confirmations or payments are made.
+Keep that terminal open. Stop with Ctrl+C. The script closes its gateway when Flutter exits. If port 8765 is occupied by a previous launch, stop that launch first. macOS/Linux: `bash run_web.sh`.
 
-## Project layout
+Alternative, two terminals from the project folder:
 
-`lib/` has models, screens, Provider, SQLite, services and reusable UI widgets. `test/` contains widget tests and tests for the network service, gallery and shared links. `android/`, `ios/` and `web/` contain platform runners.
+```powershell
+# Terminal 1: keep this running
+ dart run tool/hotel_proxy.dart
+# Terminal 2
+ flutter pub get
+ flutter run -d chrome --dart-define=STAYGO_API_URL=http://127.0.0.1:8765/api
+```
 
+Xotelo does not send browser CORS headers. `tool/hotel_proxy.dart` forwards hotel requests and images for the local Chrome app; it has no catalog, cache, API key or offline data. Its upstream hosts are fixed. Android/iOS call Xotelo directly. A published web app needs a hosted gateway and its address supplied with `STAYGO_API_URL`; simply publishing static files to GitHub Pages will not host the Dart gateway. GitHub is not needed to run the app locally.
 
-## Hotel photos
+## Features
 
-The six featured hotel profiles use three locally bundled, location-themed illustrative hotel images each (`assets/stays/`). They work without an internet connection. These are illustrative images of fictional property listings, not verified photographs of an actual hotel or evidence of room availability. The hotel titles, prices and ratings are sample content.
+- Initial catalog loads six real hotel records from Xotelo. Destinations: Istanbul, Astana, Almaty, Dubai and Phuket. No bundled product catalog or offline substitute.
+- Loading spinner, success and error with **Retry Connection**. HTTP 404, 429, server errors, malformed JSON, timeouts and network errors are handled.
+- Real hotel name, city, property image and available review information. Search, category filters, two-column grid (`0.72`) and lazy separated list.
+- Pull down **inside the hotel list/grid**, or press the refresh icon. The existing scrollable stays mounted during refresh. The app waits at least 1.5 seconds, requests the directory again and prepends the next unseen real result when one is available. It fetches up to 100 records as the catalog grows; it does not invent a new hotel if the source is exhausted.
+- List view: swipe right to left, red delete background, stable hotel ID key, floating **UNDO** restoring the original index. Remove all visible hotels to show **Catalog is Empty → Reset Catalog**.
+- Favorites, bottom tabs, complete object passed to detail screen; AppBar back and **Back to hotels** preserve root state.
+- Adaptive detail screen: image Stack and bookmark, Row/Wrap labels and sticky full-width Expanded trip button.
+- Gallery: PageView, Hero, page counter, animated dots, arrows, mouse drag and full-screen zoom. Xotelo supplies one property photograph. Two separately labeled **Travel inspiration** illustrations supplement the gallery. Missing property images show a placeholder, never a different hotel's picture.
+- Global ChangeNotifier/Provider Trip List, live badge, add/remove toggles, nights 1–30, Clear All and estimated total synchronized across screens.
+- Registration/sign-in: Form, controllers, real-time and submit validation, confirmation password, terms, role, success feedback. Local SQLite accounts and bcrypt hashing retained. Registration is local; it is not an account on Xotelo.
+- Share sheet copies `narxoz://store/product/g293974-d17323488`. Native registration also accepts `staygo://hotel/<id>`. Browser route: `/#/hotel/<id>`. Link targets are resolved through the network after restarting.
 
-For a real accommodation listing, use property-owner-provided/verified images, confirmed pricing and booking information. Live place search results use location-themed illustrations when verified property photos are unavailable.
+## Internet and rates
+
+The app checks OS connection events and makes a small real directory request every 8 seconds while active, with a 4-second timeout. When a check fails, Explore clears its visible catalog and shows Retry. Returning to the app triggers another check. Detection is asynchronous; allow about 12 seconds after disabling the network. Retry always makes a fresh HTTP request. No local catalog fallback is used. Previously saved Favorites/Trip List are in-memory user selections and can remain visible; they are not proof that the directory is online.
+
+List results have no reliable USD price. The app separately requests `/rates` in USD for **one night, 14 days from today**, and uses the lowest positive returned rate. Numeric parsing accepts both integer and double values. Missing/failed tariffs show **Price on request** and are excluded from the trip total. The total is a budget estimate, not a quote for an arbitrary number of consecutive nights or a confirmed reservation. Prices and availability can change. No payments or reservations are submitted.
+
+Directory and rates: [Xotelo documentation](https://xotelo.com/), API base `https://data.xotelo.com/api`. Property images are URLs supplied by Xotelo. The main hero is AI-generated artwork in `assets/branding/`; it is not a specific hotel listing.
+
+## Coursework map
+
+| Lab | Implementation |
+| --- | --- |
+| 5 | `screens/hotel_screen.dart`, `widgets/hotel_gallery.dart` |
+| 6 | `screens/registration_screen.dart`, `database/local_auth.dart` |
+| 7 | `screens/home_screen.dart`, `screens/hotel_screen.dart` |
+| 8 | `screens/discover_screen.dart`, `state/hotel_store.dart` |
+| 9 | `providers/cart_provider.dart`, `screens/trip_list_screen.dart`, Provider above MaterialApp |
+| 10 | `services/hotel_places_service.dart`, `models/hotel.dart`, `models/hotel_rate.dart`, gallery and share links |
+
+## Validation
+
+```powershell
+flutter pub get
+flutter analyze
+flutter test
+flutter build web
+```
+
+Or run `powershell -ExecutionPolicy Bypass -File .\check_project.ps1`.
+
+Tests use mocked responses, not the live directory or an offline fallback in the app. They cover numeric conversion, HTTP errors, rates, real refresh logic, offline invalidation, UNDO/reset, cart synchronization, navigation, gallery and responsive layouts. See `PROJECT_CHECK.md` for what was actually verified before delivery. Validation here passed: Flutter analyze, all 32 tests and a web release build. Re-run the commands after local changes. Native device execution and Chrome end-to-end interaction still require local checks; no precompiled application is included.
+
+For native link verification with the app installed:
+
+```powershell
+adb shell am start -a android.intent.action.VIEW -d "narxoz://store/product/g293974-d17323488"
+```
+
+Favorites and Trip List live for the app session. SQLite preserves accounts and the active account. This is a student travel planner without a production booking backend.

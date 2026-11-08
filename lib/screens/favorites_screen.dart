@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/hotel.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hotel_list_tile.dart';
@@ -27,11 +28,19 @@ class FavoritesScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your favorites', style: TextStyle(fontSize: 25,
-                  fontWeight: FontWeight.w800, color: AppTheme.navy)),
+              Text(
+                'Your favorites',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.navy,
+                ),
+              ),
               SizedBox(height: 5),
-              Text('Hotels you want to come back to',
-                  style: TextStyle(color: AppTheme.muted)),
+              Text(
+                'Hotels you want to come back to',
+                style: TextStyle(color: AppTheme.muted),
+              ),
             ],
           ),
         ),
@@ -43,17 +52,30 @@ class FavoritesScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.favorite_border_rounded,
-                            size: 67, color: AppTheme.muted),
+                        const Icon(
+                          Icons.favorite_border_rounded,
+                          size: 67,
+                          color: AppTheme.muted,
+                        ),
                         const SizedBox(height: 12),
-                        const Text('No favorites yet',
-                            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                        const Text(
+                          'No favorites yet',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         const SizedBox(height: 7),
-                        const Text('Tap the heart on a hotel to save it here.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.muted)),
+                        const Text(
+                          'Tap the heart on a hotel to save it here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppTheme.muted),
+                        ),
                         const SizedBox(height: 17),
-                        FilledButton(onPressed: onExplore, child: const Text('Explore hotels')),
+                        FilledButton(
+                          onPressed: onExplore,
+                          child: const Text('Explore hotels'),
+                        ),
                       ],
                     ),
                   ),

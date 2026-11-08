@@ -1,4 +1,3 @@
-
 import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
@@ -62,11 +61,10 @@ class LocalAuth {
   Future<void> _saveSession(int id) async {
     final db = await database;
 
-    await db.insert(
-      'active_session',
-      {'slot': 1, 'user_id': id},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('active_session', {
+      'slot': 1,
+      'user_id': id,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<UserProfile> register({
@@ -89,10 +87,7 @@ class LocalAuth {
       throw StateError('This email is already registered');
     }
 
-    final passwordHash = BCrypt.hashpw(
-      password,
-      BCrypt.gensalt(),
-    );
+    final passwordHash = BCrypt.hashpw(password, BCrypt.gensalt());
 
     final id = await db.insert('users', {
       'name': name.trim(),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
+import '../services/hotel_api_config.dart';
 
 class HotelImage extends StatelessWidget {
   const HotelImage({
@@ -30,7 +32,7 @@ class HotelImage extends StatelessWidget {
       );
     }
     return Image.network(
-      url,
+      hotelImageUrl(url),
       width: width,
       height: height,
       fit: fit,

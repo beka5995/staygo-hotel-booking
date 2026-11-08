@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
@@ -62,12 +61,9 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  profile?.email ??
-                      'Sign in or create your account',
+                  profile?.email ?? 'Sign in or create your account',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppTheme.muted,
-                  ),
+                  style: const TextStyle(color: AppTheme.muted),
                 ),
                 if (profile != null) ...[
                   const SizedBox(height: 12),
@@ -113,9 +109,13 @@ class ProfileScreen extends StatelessWidget {
             applicationName: 'StayGo',
             applicationVersion: '1.2.0',
             children: const [
-              Text('Find places to stay, save favorites and plan your next trip.'),
+              Text(
+                'Find places to stay, save favorites and plan your next trip.',
+              ),
               SizedBox(height: 10),
-              Text('Location data © OpenStreetMap contributors.'),
+              Text(
+                'Hotel information and indicative rates: Xotelo. Trip List is a travel budget, not a confirmed reservation.',
+              ),
             ],
           ),
         ),

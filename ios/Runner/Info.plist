@@ -14,11 +14,11 @@
 			<key>CFBundleURLName</key>
 			<string>StayGo hotels</string>
 			<key>CFBundleURLSchemes</key>
-			<array><string>staygo</string></array>
+			<array><string>staygo</string><string>narxoz</string></array>
 		</dict>
 	</array>
 	<key>FlutterDeepLinkingEnabled</key>
-	<true/>
+	<false/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

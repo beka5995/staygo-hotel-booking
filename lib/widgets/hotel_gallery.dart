@@ -37,10 +37,8 @@ class _HotelGalleryState extends State<HotelGallery> {
   void _viewPhoto(int index) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => _FullScreenHotelGallery(
-          hotel: widget.hotel,
-          initialPage: index,
-        ),
+        builder: (context) =>
+            _FullScreenHotelGallery(hotel: widget.hotel, initialPage: index),
       ),
     );
   }
@@ -92,15 +90,10 @@ class _HotelGalleryState extends State<HotelGallery> {
                         child: PageView.builder(
                           controller: _controller,
                           itemCount: photos.length,
-                          onPageChanged: (index) => setState(() => _page = index),
+                          onPageChanged: (index) =>
+                              setState(() => _page = index),
                           itemBuilder: (context, index) {
-                            final picture = HotelImage(
-                              url: photos[index],
-                              fallbackAsset:
-                                  index < widget.hotel.assetPhotos.length
-                                      ? widget.hotel.assetPhotos[index]
-                                      : null,
-                            );
+                            final picture = HotelImage(url: photos[index]);
                             return Semantics(
                               button: true,
                               label: 'Enlarge photo ${index + 1}',
@@ -120,11 +113,20 @@ class _HotelGalleryState extends State<HotelGallery> {
                     if (photos.isNotEmpty)
                       Positioned(
                         left: 12,
+                        bottom: 48,
+                        child: _photoLabel(widget.hotel, _page),
+                      ),
+                    if (photos.isNotEmpty)
+                      Positioned(
+                        left: 12,
                         top: 12,
                         child: IconButton.filledTonal(
                           tooltip: 'View photo full screen',
                           onPressed: () => _viewPhoto(_page),
-                          icon: const Icon(Icons.open_in_full_rounded, size: 18),
+                          icon: const Icon(
+                            Icons.open_in_full_rounded,
+                            size: 18,
+                          ),
                         ),
                       ),
                     if (photos.length > 1) ...[
@@ -188,7 +190,9 @@ class _HotelGalleryState extends State<HotelGallery> {
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 220),
                                 curve: Curves.easeOut,
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
                                 height: 7,
                                 width: _page == index ? 22 : 7,
                                 decoration: BoxDecoration(
@@ -284,15 +288,14 @@ class _FullScreenHotelGalleryState extends State<_FullScreenHotelGallery> {
               minScale: 1,
               maxScale: 4,
               child: Center(
-                child: HotelImage(
-                  url: photos[index],
-                  fallbackAsset: index < widget.hotel.assetPhotos.length
-                      ? widget.hotel.assetPhotos[index]
-                      : null,
-                  fit: BoxFit.contain,
-                ),
+                child: HotelImage(url: photos[index], fit: BoxFit.contain),
               ),
             ),
+          ),
+          Positioned(
+            left: 16,
+            bottom: 24,
+            child: _photoLabel(widget.hotel, _page),
           ),
           if (_page > 0)
             Positioned(
@@ -325,3 +328,17 @@ class _FullScreenHotelGalleryState extends State<_FullScreenHotelGallery> {
     );
   }
 }
+
+Widget _photoLabel(Hotel hotel, int page) => DecoratedBox(
+  decoration: BoxDecoration(
+    color: Colors.black.withValues(alpha: 0.65),
+    borderRadius: BorderRadius.circular(8),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    child: Text(
+      hotel.isInspirationPhoto(page) ? 'Travel inspiration' : 'Hotel photo',
+      style: const TextStyle(color: Colors.white, fontSize: 11),
+    ),
+  ),
+);

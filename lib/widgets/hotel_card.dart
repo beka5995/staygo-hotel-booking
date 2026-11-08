@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/hotel.dart';
 import '../theme/app_theme.dart';
 import 'hotel_image.dart';
@@ -31,12 +32,10 @@ class HotelCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Hero(tag: 'hotel_image_${hotel.id}', child: HotelImage(
-                    url: hotel.imageUrl,
-                    fallbackAsset: hotel.assetPhotos.isNotEmpty
-                        ? hotel.assetPhotos.first
-                        : null,
-                  )),
+                  Hero(
+                    tag: 'hotel_image_${hotel.id}',
+                    child: HotelImage(url: hotel.imageUrl),
+                  ),
                   if (hotel.gallery.length > 1)
                     Positioned(
                       left: 8,
@@ -54,11 +53,14 @@ class HotelCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.photo_library_outlined,
-                                  size: 13, color: Colors.white),
+                              const Icon(
+                                Icons.photo_library_outlined,
+                                size: 13,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 4),
                               Text(
-                                '${hotel.gallery.length} photos',
+                                '${hotel.gallery.length} images',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -74,14 +76,20 @@ class HotelCard extends StatelessWidget {
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.94),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         hotel.category,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -90,11 +98,18 @@ class HotelCard extends StatelessWidget {
                     right: 4,
                     child: IconButton.filledTonal(
                       visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      constraints: const BoxConstraints(
+                        minWidth: 34,
+                        minHeight: 34,
+                      ),
                       onPressed: onFavorite,
-                      tooltip: isFavorite ? 'Remove from favorites' : 'Save to favorites',
+                      tooltip: isFavorite
+                          ? 'Remove from favorites'
+                          : 'Save to favorites',
                       icon: Icon(
-                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
                         size: 18,
                         color: isFavorite ? Colors.redAccent : AppTheme.navy,
                       ),
@@ -111,7 +126,10 @@ class HotelCard extends StatelessWidget {
                 children: [
                   Text(
                     hotel.name,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -127,15 +145,31 @@ class HotelCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          hotel.hasPrice ? '\$${hotel.pricePerNight} / night' : 'View location',
+                          hotel.hasPrice
+                              ? '${hotel.priceLabel} / night'
+                              : hotel.priceLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.teal),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.teal,
+                          ),
                         ),
                       ),
                       if (hotel.hasRating) ...[
-                        const Icon(Icons.star_rounded, color: Color(0xFFFFB547), size: 15),
-                        Text('${hotel.rating}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFFFFB547),
+                          size: 15,
+                        ),
+                        Text(
+                          '${hotel.rating}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ],
                   ),

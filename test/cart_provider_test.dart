@@ -1,14 +1,14 @@
-
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:final_project_android_hotelbooking/data/sample_hotels.dart';
+import 'support/fixtures.dart';
+
 import 'package:final_project_android_hotelbooking/providers/cart_provider.dart';
 
 void main() {
   test('Add hotels and calculate total', () {
     final cart = CartProvider();
-    final first = sampleHotels[0];
-    final second = sampleHotels[1];
+    final first = fixtureHotels[0];
+    final second = fixtureHotels[1];
 
     cart.toggleHotel(first);
     cart.toggleHotel(second);
@@ -18,17 +18,14 @@ void main() {
     expect(cart.containsHotel(first.id), true);
     expect(cart.containsHotel(second.id), true);
 
-    expect(
-      cart.totalPrice,
-      first.pricePerNight + second.pricePerNight,
-    );
+    expect(cart.totalPrice, first.pricePerNight + second.pricePerNight);
 
     cart.dispose();
   });
 
   test('Change nights and update total', () {
     final cart = CartProvider();
-    final hotel = sampleHotels[0];
+    final hotel = fixtureHotels[0];
 
     cart.toggleHotel(hotel);
 
@@ -50,8 +47,8 @@ void main() {
 
   test('Remove individual hotel', () {
     final cart = CartProvider();
-    final first = sampleHotels[0];
-    final second = sampleHotels[1];
+    final first = fixtureHotels[0];
+    final second = fixtureHotels[1];
 
     cart.toggleHotel(first);
     cart.toggleHotel(second);
@@ -68,7 +65,7 @@ void main() {
 
   test('Toggle adds and removes hotel', () {
     final cart = CartProvider();
-    final hotel = sampleHotels[0];
+    final hotel = fixtureHotels[0];
 
     cart.toggleHotel(hotel);
 
@@ -85,9 +82,9 @@ void main() {
   test('Clear All removes every hotel', () {
     final cart = CartProvider();
 
-    cart.toggleHotel(sampleHotels[0]);
-    cart.toggleHotel(sampleHotels[1]);
-    cart.toggleHotel(sampleHotels[2]);
+    cart.toggleHotel(fixtureHotels[0]);
+    cart.toggleHotel(fixtureHotels[1]);
+    cart.toggleHotel(fixtureHotels[2]);
 
     expect(cart.itemCount, 3);
 
@@ -102,7 +99,7 @@ void main() {
 
   test('Nights must stay between 1 and 30', () {
     final cart = CartProvider();
-    final hotel = sampleHotels[0];
+    final hotel = fixtureHotels[0];
 
     cart.toggleHotel(hotel);
 
@@ -120,7 +117,7 @@ void main() {
 
   test('ChangeNotifier updates listeners', () {
     final cart = CartProvider();
-    final hotel = sampleHotels[0];
+    final hotel = fixtureHotels[0];
 
     int updates = 0;
 
@@ -143,6 +140,19 @@ void main() {
     expect(updates, 5);
     expect(cart.itemCount, 0);
 
+    cart.dispose();
+  });
+  test('Unknown rates are excluded, refreshed rates preserve nights', () {
+    final cart = CartProvider();
+    final hotel = hotelFixture(0, price: 0);
+    cart.toggleHotel(hotel);
+    cart.changeNights(hotel.id, 2);
+    expect(cart.unpricedCount, 1);
+    expect(cart.totalPrice, 0);
+    cart.updateHotels({hotel.id: hotel.copyWith(pricePerNight: 97.5)});
+    expect(cart.items.first.nights, 3);
+    expect(cart.totalPrice, 292.5);
+    expect(cart.unpricedCount, 0);
     cart.dispose();
   });
 }
