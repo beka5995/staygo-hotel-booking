@@ -16,6 +16,8 @@ import 'hotel_link_screen.dart';
 import 'profile_screen.dart';
 import 'registration_screen.dart';
 import 'trip_list_screen.dart';
+import 'notes_screen.dart';
+import '../state/preferences_store.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -42,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _store = widget.store ?? HotelStore();
-    _store.addListener(_syncTrip);
     _store.load();
     if (widget.enablePlatformServices) {
       WidgetsBinding.instance.addObserver(this);
@@ -65,10 +66,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       });
     }
-  }
-
-  void _syncTrip() {
-    if (mounted) context.read<CartProvider>().updateHotels(_store.knownHotels);
   }
 
   void _startTimer() {
@@ -131,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     MaterialPageRoute<void>(
       builder: (_) => HotelScreen(
         hotel: hotel,
+        store: _store,
         isFavorite: _store.isFavorite(hotel.id),
         onToggleFavorite: () => _store.toggleFavorite(hotel),
       ),
@@ -168,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _network?.cancel();
     _timer?.cancel();
-    _store.removeListener(_syncTrip);
     if (widget.store == null) _store.dispose();
     super.dispose();
   }
@@ -176,14 +173,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(
-        _selectedTab == 0
-            ? 'StayGo'
-            : _selectedTab == 1
-            ? 'Saved stays'
-            : 'Account',
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _selectedTab == 0
+                ? 'StayGo'
+                : _selectedTab == 1
+                ? 'Saved stays'
+                : 'Account',
+          ),
+          Text(
+            context.watch<PreferencesStore>().displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Notes',
+          icon: const Icon(Icons.edit_note_rounded),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Notes')),
+                body: const NotesScreen(),
+              ),
+            ),
+          ),
+        ),
+
         Consumer<CartProvider>(
           builder: (context, cart, _) => Badge(
             isLabelVisible: cart.itemCount > 0,

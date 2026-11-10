@@ -65,4 +65,45 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get dark {
+    final colors = ColorScheme.fromSeed(
+      seedColor: teal,
+      brightness: Brightness.dark,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: colors,
+      scaffoldBackgroundColor: const Color(0xFF111A20),
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF111A20),
+        foregroundColor: colors.onSurface,
+        elevation: 0,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colors.surfaceContainerLow,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      cardTheme: CardThemeData(
+        color: colors.surfaceContainerLow,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colors.surfaceContainer,
+        indicatorColor: colors.secondaryContainer,
+        labelTextStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12)),
+      ),
+    );
+  }
 }

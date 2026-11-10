@@ -1,3 +1,5 @@
+import '../utils/stored_json.dart';
+
 class Hotel {
   const Hotel({
     required this.id,
@@ -124,4 +126,47 @@ class Hotel {
     sourceUrl: sourceUrl,
     rateDate: rateDate ?? this.rateDate,
   );
+  Map<String, dynamic> toSavedJson() => {
+    'id': id,
+    'name': name,
+    'city': city,
+    'pricePerNight': pricePerNight,
+    'rating': rating,
+    'imageUrl': imageUrl,
+    'description': description,
+    'category': category,
+    'amenities': amenities,
+    'reviewCount': reviewCount,
+    'photos': photos,
+    'assetPhotos': assetPhotos,
+    'address': address,
+    'sourceUrl': sourceUrl,
+    'rateDate': rateDate?.toIso8601String(),
+  };
+  factory Hotel.fromSavedJson(Map<String, dynamic> json) {
+    final rawDate = json['rateDate'];
+    final date = rawDate is String ? DateTime.tryParse(rawDate) : null;
+    if ((rawDate != null && date == null) ||
+        (json['address'] != null && json['address'] is! String) ||
+        (json['sourceUrl'] != null && json['sourceUrl'] is! String)) {
+      throw const FormatException('Invalid saved hotel');
+    }
+    return Hotel(
+      id: StoredJson.text(json, 'id', required: true),
+      name: StoredJson.text(json, 'name', required: true),
+      city: StoredJson.text(json, 'city'),
+      pricePerNight: StoredJson.number(json, 'pricePerNight'),
+      rating: StoredJson.number(json, 'rating', maximum: 5),
+      imageUrl: StoredJson.text(json, 'imageUrl'),
+      description: StoredJson.text(json, 'description'),
+      category: StoredJson.text(json, 'category'),
+      amenities: StoredJson.strings(json, 'amenities'),
+      reviewCount: StoredJson.integer(json, 'reviewCount'),
+      photos: StoredJson.strings(json, 'photos'),
+      assetPhotos: StoredJson.strings(json, 'assetPhotos'),
+      address: json['address'] as String?,
+      sourceUrl: json['sourceUrl'] as String?,
+      rateDate: date,
+    );
+  }
 }

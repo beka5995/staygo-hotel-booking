@@ -3,7 +3,6 @@ import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 
 import '../models/hotel.dart';
-import '../theme/app_theme.dart';
 import 'hotel_image.dart';
 
 class HotelGallery extends StatefulWidget {
@@ -67,13 +66,13 @@ class _HotelGalleryState extends State<HotelGallery> {
                   fit: StackFit.expand,
                   children: [
                     if (photos.isEmpty)
-                      const ColoredBox(
-                        color: Color(0xFFE3EFED),
+                      ColoredBox(
+                        color: const Color(0xFFE3EFED),
                         child: Center(
                           child: Icon(
                             Icons.hotel_outlined,
                             size: 82,
-                            color: AppTheme.teal,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       )

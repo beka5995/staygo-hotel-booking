@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/hotel.dart';
@@ -27,6 +29,10 @@ class HotelStore extends ChangeNotifier {
   bool _checking = false;
   int _token = 0;
   int _revision = 0;
+  final Set<String> _pricing = {};
+  Future<void> _rates = Future<void>.value();
+  bool isRateLoading(String id) => _pricing.contains(id);
+  Future<void> get ratesSettled => _rates;
 
   List<Hotel> get hotels => List.unmodifiable(_hotels);
   Map<String, Hotel> get knownHotels => Map.unmodifiable(_known);
@@ -40,6 +46,19 @@ class HotelStore extends ChangeNotifier {
   int get revision => _revision;
   bool isFavorite(String id) => _favorites.contains(id);
 
+  void rememberItems(List<Hotel> items) {
+    for (final item in items) {
+      _known.putIfAbsent(item.id, () => item);
+    }
+  }
+
+  void restoreFavorites(List<Hotel> hotels) {
+    for (final hotel in hotels) {
+      _known.putIfAbsent(hotel.id, () => hotel);
+      _favorites.add(hotel.id);
+    }
+  }
+
   void toggleFavorite(Hotel hotel) {
     _known.putIfAbsent(hotel.id, () => hotel);
     if (!_favorites.add(hotel.id)) _favorites.remove(hotel.id);
@@ -49,6 +68,7 @@ class HotelStore extends ChangeNotifier {
   Future<void> load({bool prepend = false, bool reset = false}) async {
     if (_disposed || _state == HotelLoadState.loading) return;
     final token = ++_token;
+    _pricing.clear();
     final previous = List<Hotel>.of(_hotels);
     _refreshing = prepend && previous.isNotEmpty;
     _state = HotelLoadState.loading;
@@ -81,34 +101,36 @@ class HotelStore extends ChangeNotifier {
       } else {
         selected.addAll(available.take(6));
       }
-      // Only a newly shown stay needs an additional tariff lookup on refresh.
-      final priced = await Future.wait(
-        selected.map((hotel) {
-          final existing = _known[hotel.id];
-          if (prepend && existing != null && existing.hasPrice) {
-            return Future<Hotel>.value(
-              hotel.copyWith(
-                pricePerNight: existing.pricePerNight,
-                rateDate: existing.rateDate,
-              ),
-            );
-          }
-          return _service.withRate(hotel);
-        }),
-      );
-      if (_disposed || token != _token) return;
+      // Publish directory results immediately; room rates resolve independently.
+      final visible = selected.map((hotel) {
+        final previous = _known[hotel.id];
+        return previous != null && previous.hasPrice
+            ? hotel.copyWith(
+                pricePerNight: previous.pricePerNight,
+                rateDate: previous.rateDate,
+              )
+            : hotel;
+      }).toList();
       _offline = false;
-      _known.addEntries(fetched.map((h) => MapEntry(h.id, _known[h.id] ?? h)));
-      _known.addEntries(priced.map((h) => MapEntry(h.id, h)));
+      _known.addEntries(
+        fetched.map((hotel) => MapEntry(hotel.id, _known[hotel.id] ?? hotel)),
+      );
+      _known.addEntries(visible.map((hotel) => MapEntry(hotel.id, hotel)));
       _hotels
         ..clear()
-        ..addAll(priced);
+        ..addAll(visible);
+      _pricing
+        ..clear()
+        ..addAll(selected.map((hotel) => hotel.id));
       _state = HotelLoadState.ready;
       _refreshing = false;
       _revision++;
+      notifyListeners();
+      _rates = _loadRates(selected, token);
     } catch (error) {
       if (_disposed || token != _token) return;
       _hotels.clear();
+      _pricing.clear();
       _refreshing = false;
       _state = HotelLoadState.error;
       _error = error is HotelPlacesException
@@ -116,6 +138,27 @@ class HotelStore extends ChangeNotifier {
           : 'Could not load stays. Please try again.';
     }
     if (!_disposed && token == _token) notifyListeners();
+  }
+
+  Future<void> _loadRates(List<Hotel> hotels, int token) async {
+    await Future.wait(
+      hotels.map((hotel) async {
+        Hotel updated;
+        try {
+          updated = await _service.withRate(hotel);
+        } catch (_) {
+          updated = hotel;
+        }
+        if (_disposed || token != _token || _state != HotelLoadState.ready) {
+          return;
+        }
+        _known[hotel.id] = updated;
+        final index = _hotels.indexWhere((item) => item.id == hotel.id);
+        if (index >= 0) _hotels[index] = updated;
+        _pricing.remove(hotel.id);
+        notifyListeners();
+      }),
+    );
   }
 
   Future<void> refresh() => load(prepend: true);
@@ -143,7 +186,10 @@ class HotelStore extends ChangeNotifier {
       return;
     }
     _dismissed.remove(hotel.id);
-    _hotels.insert(index.clamp(0, _hotels.length).toInt(), hotel);
+    _hotels.insert(
+      index.clamp(0, _hotels.length).toInt(),
+      _known[hotel.id] ?? hotel,
+    );
     notifyListeners();
   }
 
@@ -154,6 +200,7 @@ class HotelStore extends ChangeNotifier {
     if (!available) {
       ++_token;
       _hotels.clear();
+      _pricing.clear();
       _refreshing = false;
       _state = HotelLoadState.error;
       _error = 'You are offline. Connect to the internet and try again.';
@@ -175,8 +222,10 @@ class HotelStore extends ChangeNotifier {
     } catch (_) {
       if (_disposed || token != _token) return;
       _hotels.clear();
+      _pricing.clear();
       _refreshing = false;
       _state = HotelLoadState.error;
+      ++_token;
       _error = 'Cannot reach the hotel directory. Check your connection and try again.';
       notifyListeners();
     } finally {

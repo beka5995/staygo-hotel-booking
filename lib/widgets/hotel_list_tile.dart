@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../models/hotel.dart';
-import '../theme/app_theme.dart';
 import 'hotel_image.dart';
 
 class HotelListTile extends StatelessWidget {
   const HotelListTile({
     super.key,
     required this.hotel,
+    this.isPriceLoading = false,
     required this.isFavorite,
     required this.onTap,
     required this.onFavorite,
   });
 
   final Hotel hotel;
+  final bool isPriceLoading;
   final bool isFavorite;
   final VoidCallback onTap;
   final VoidCallback onFavorite;
@@ -21,7 +22,7 @@ class HotelListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -57,8 +58,8 @@ class HotelListTile extends StatelessWidget {
                       '${hotel.category} • ${hotel.city}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.muted,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -79,11 +80,13 @@ class HotelListTile extends StatelessWidget {
                       ),
                     const SizedBox(height: 5),
                     Text(
-                      hotel.hasPrice
+                      isPriceLoading
+                          ? 'Checking price…'
+                          : hotel.hasPrice
                           ? '${hotel.priceLabel} / night'
                           : hotel.priceLabel,
-                      style: const TextStyle(
-                        color: AppTheme.teal,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -99,7 +102,9 @@ class HotelListTile extends StatelessWidget {
                   isFavorite
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  color: isFavorite ? Colors.redAccent : AppTheme.muted,
+                  color: isFavorite
+                      ? Colors.redAccent
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

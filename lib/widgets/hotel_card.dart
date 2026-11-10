@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../models/hotel.dart';
-import '../theme/app_theme.dart';
 import 'hotel_image.dart';
 
 class HotelCard extends StatelessWidget {
   const HotelCard({
     super.key,
     required this.hotel,
+    this.isPriceLoading = false,
     required this.isFavorite,
     required this.onTap,
     required this.onFavorite,
   });
 
   final Hotel hotel;
+  final bool isPriceLoading;
   final bool isFavorite;
   final VoidCallback onTap;
   final VoidCallback onFavorite;
@@ -81,7 +82,10 @@ class HotelCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.94),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.94),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -111,7 +115,9 @@ class HotelCard extends StatelessWidget {
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 18,
-                        color: isFavorite ? Colors.redAccent : AppTheme.navy,
+                        color: isFavorite
+                            ? Colors.redAccent
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -138,22 +144,27 @@ class HotelCard extends StatelessWidget {
                     hotel.city,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.muted),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 5),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          hotel.hasPrice
+                          isPriceLoading
+                              ? 'Checking price…'
+                              : hotel.hasPrice
                               ? '${hotel.priceLabel} / night'
                               : hotel.priceLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.teal,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),

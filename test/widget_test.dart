@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:final_project_android_hotelbooking/state/preferences_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:final_project_android_hotelbooking/main.dart';
@@ -7,6 +9,9 @@ import 'package:final_project_android_hotelbooking/screens/registration_screen.d
 import 'support/fixtures.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
   Future<HotelStore> open(
     WidgetTester tester, {
     Size size = const Size(390, 844),
@@ -23,7 +28,13 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       store.dispose();
     });
-    await tester.pumpWidget(MyApp(store: store, enablePlatformServices: false));
+    await tester.pumpWidget(
+      MyApp(
+        preferences: await PreferencesStore.load(),
+        store: store,
+        enablePlatformServices: false,
+      ),
+    );
     await tester.pumpAndSettle();
     return store;
   }

@@ -5,7 +5,6 @@ import '../models/hotel.dart';
 import '../providers/cart_provider.dart';
 import '../services/hotel_places_service.dart';
 import '../state/hotel_store.dart';
-import '../theme/app_theme.dart';
 import '../widgets/hotel_card.dart';
 import '../widgets/hotel_list_tile.dart';
 
@@ -115,7 +114,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 54, color: AppTheme.teal),
+          Icon(icon, size: 54, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 14),
           Text(
             title,
@@ -126,7 +125,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.muted),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
@@ -229,8 +230,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               Image.asset(
                                 'assets/branding/staygo_hero.png',
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    const ColoredBox(color: AppTheme.teal),
+                                errorBuilder: (_, _, _) => ColoredBox(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                               const DecoratedBox(
                                 decoration: BoxDecoration(
@@ -339,8 +341,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               icon: Icon(
                                 Icons.view_list_rounded,
                                 color: !_showGrid
-                                    ? AppTheme.teal
-                                    : AppTheme.muted,
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                               ),
                             ),
                             IconButton(
@@ -351,8 +355,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               icon: Icon(
                                 Icons.grid_view_rounded,
                                 color: _showGrid
-                                    ? AppTheme.teal
-                                    : AppTheme.muted,
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -445,6 +451,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: HotelCard(
                 key: ValueKey(hotel.id),
                 hotel: hotel,
+                isPriceLoading: widget.store.isRateLoading(hotel.id),
                 isFavorite: widget.store.isFavorite(hotel.id),
                 onTap: () => widget.onHotelTap(hotel),
                 onFavorite: () => widget.store.toggleFavorite(hotel),
@@ -482,6 +489,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             children: [
               HotelListTile(
                 hotel: hotel,
+                isPriceLoading: widget.store.isRateLoading(hotel.id),
                 isFavorite: widget.store.isFavorite(hotel.id),
                 onTap: () => widget.onHotelTap(hotel),
                 onFavorite: () => widget.store.toggleFavorite(hotel),

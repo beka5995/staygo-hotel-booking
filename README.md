@@ -49,9 +49,9 @@ Xotelo does not send browser CORS headers. `tool/hotel_proxy.dart` forwards hote
 
 ## Internet and rates
 
-The app checks OS connection events and makes a small real directory request every 8 seconds while active, with a 4-second timeout. When a check fails, Explore clears its visible catalog and shows Retry. Returning to the app triggers another check. Detection is asynchronous; allow about 12 seconds after disabling the network. Retry always makes a fresh HTTP request. No local catalog fallback is used. Previously saved Favorites/Trip List are in-memory user selections and can remain visible; they are not proof that the directory is online.
+The app checks OS connection events and makes a small real directory request every 8 seconds while active, with a 4-second timeout. When a check fails, Explore clears its visible catalog and shows Retry. Returning to the app triggers another check. Detection is asynchronous; allow about 12 seconds after disabling the network. Retry always makes a fresh HTTP request. No local catalog fallback is used. Previously saved Favorites/Trip List are local user selections and can remain visible after restart; they are not proof that the directory is online.
 
-List results have no reliable USD price. The app separately requests `/rates` in USD for **one night, 14 days from today**, and uses the lowest positive returned rate. Numeric parsing accepts both integer and double values. Missing/failed tariffs show **Price on request** and are excluded from the trip total. The total is a budget estimate, not a quote for an arbitrary number of consecutive nights or a confirmed reservation. Prices and availability can change. No payments or reservations are submitted.
+Hotel cards appear as soon as the directory arrives. Rates load independently in parallel; each card and an already open detail screen update when its rate arrives. Pending rates show Checking price…. List results have no reliable USD price. The app separately requests `/rates` in USD for **one night, 14 days from today**, and uses the lowest positive returned rate. Numeric parsing accepts both integer and double values. Missing/failed tariffs show **Price on request** and are excluded from the trip total. The total is a budget estimate, not a quote for an arbitrary number of consecutive nights or a confirmed reservation. Prices and availability can change. No payments or reservations are submitted.
 
 Directory and rates: [Xotelo documentation](https://xotelo.com/), API base `https://data.xotelo.com/api`. Property images are URLs supplied by Xotelo. The main hero is AI-generated artwork in `assets/branding/`; it is not a specific hotel listing.
 
@@ -77,7 +77,7 @@ flutter build web
 
 Or run `powershell -ExecutionPolicy Bypass -File .\check_project.ps1`.
 
-Tests use mocked responses, not the live directory or an offline fallback in the app. They cover numeric conversion, HTTP errors, rates, real refresh logic, offline invalidation, UNDO/reset, cart synchronization, navigation, gallery and responsive layouts. See `PROJECT_CHECK.md` for what was actually verified before delivery. Validation here passed: Flutter analyze, all 32 tests and a web release build. Re-run the commands after local changes. Native device execution and Chrome end-to-end interaction still require local checks; no precompiled application is included.
+Tests use mocked responses, not the live directory or an offline fallback in the app. They cover numeric conversion, HTTP errors, rates, real refresh logic, offline invalidation, UNDO/reset, cart synchronization, navigation, gallery and responsive layouts. See `PROJECT_CHECK.md` for what was actually verified before delivery. See LAB11_CHECK.md for the current verification results. Re-run the commands after local changes. Native device execution and Chrome end-to-end interaction still require local checks; no precompiled application is included.
 
 For native link verification with the app installed:
 
@@ -85,4 +85,11 @@ For native link verification with the app installed:
 adb shell am start -a android.intent.action.VIEW -d "narxoz://store/product/g293974-d17323488"
 ```
 
-Favorites and Trip List live for the app session. SQLite preserves accounts and the active account. This is a student travel planner without a production booking backend.
+Favorites and Trip List are saved locally, including the number of nights. SQLite preserves accounts and the active account. This is a student travel planner without a production booking backend.
+
+
+## LAB 11: local notes and settings
+
+The Notes button in the upper-right app bar, beside the cart, opens a persisted Dark/Light switch, display name and note checklist. SharedPreferences is loaded before runApp; all note mutations serialize the list to one JSON string. See `LAB11_RU.md` for source locations and the real force-quit verification steps. Passwords/tokens are not stored in preferences. Catalog network behavior from LAB 10 is preserved.
+
+For Chrome, use `powershell -ExecutionPolicy Bypass -File .\run_web.ps1`; a fixed app-specific port keeps the browser storage origin stable across launches. Account authentication remains in SQLite. LAB 11 persists theme, display name, notes, favorites and cart/trip selections. The bottom navigation has three tabs; Notes opens as a separate screen and Back restores the previous tab.

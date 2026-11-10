@@ -32,6 +32,7 @@ class _HotelLinkScreenState extends State<HotelLinkScreen> {
         final hotel = snapshot.data!;
         return HotelScreen(
           hotel: hotel,
+          store: widget.store,
           isFavorite: widget.store.isFavorite(hotel.id),
           onToggleFavorite: () => widget.store.toggleFavorite(hotel),
         );

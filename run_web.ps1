@@ -13,8 +13,7 @@ try {
         Start-Sleep -Milliseconds 250
     }
     if (-not $staygoReady) { throw 'Gateway did not start on port 8765' }
-    flutter run -d chrome --dart-define=STAYGO_API_URL=http://127.0.0.1:8765/api
+    flutter run -d chrome --web-port=7359 --dart-define=STAYGO_API_URL=http://127.0.0.1:8765/api
 } finally {
     if (-not $staygoGateway.HasExited) { taskkill.exe /PID $staygoGateway.Id /T /F | Out-Null }
 }
-

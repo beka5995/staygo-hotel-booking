@@ -5,6 +5,12 @@ import '../models/trip_item.dart';
 
 class CartProvider extends ChangeNotifier {
   final Map<String, TripItem> _items = {};
+  CartProvider({List<TripItem> initialItems = const []}) {
+    for (final item in initialItems) {
+      _items[item.hotel.id] = item;
+    }
+  }
+
   List<TripItem> get items => List.unmodifiable(_items.values);
   int get itemCount => _items.length;
   int get unpricedCount => _items.values.where((i) => !i.hotel.hasPrice).length;

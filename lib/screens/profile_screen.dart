@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
-import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
@@ -22,18 +21,20 @@ class ProfileScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 30),
       children: [
-        const Text(
+        Text(
           'My profile',
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.w800,
-            color: AppTheme.navy,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 5),
-        const Text(
+        Text(
           'Your travel account',
-          style: TextStyle(color: AppTheme.muted),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 22),
         Card(
@@ -41,13 +42,15 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 34,
-                  backgroundColor: Color(0xFFE1F1EF),
+                  backgroundColor: Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer,
                   child: Icon(
                     Icons.person_rounded,
                     size: 35,
-                    color: AppTheme.teal,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -63,7 +66,9 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   profile?.email ?? 'Sign in or create your account',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.muted),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 if (profile != null) ...[
                   const SizedBox(height: 12),

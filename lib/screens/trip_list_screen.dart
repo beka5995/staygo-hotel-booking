@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
-import '../theme/app_theme.dart';
 import '../widgets/hotel_image.dart';
 
 class TripListScreen extends StatelessWidget {
@@ -20,27 +19,27 @@ class TripListScreen extends StatelessWidget {
         ],
       ),
       body: items.isEmpty
-          ? const Center(
+          ? Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.luggage_outlined,
                       size: 65,
-                      color: AppTheme.muted,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    SizedBox(height: 12),
-                    Text(
+                    const SizedBox(height: 12),
+                    const Text(
                       'Your trip list is empty',
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 7),
-                    Text('Add hotels from Explore.'),
+                    const SizedBox(height: 7),
+                    const Text('Add hotels from Explore.'),
                   ],
                 ),
               ),
@@ -83,8 +82,10 @@ class TripListScreen extends StatelessWidget {
                                     hotel.hasPrice
                                         ? '${hotel.priceLabel} / night'
                                         : hotel.priceLabel,
-                                    style: const TextStyle(
-                                      color: AppTheme.teal,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
                                     ),
                                   ),
                                 ],
@@ -157,9 +158,9 @@ class TripListScreen extends StatelessWidget {
                       ),
                       Text(
                         '\$${cart.totalPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 23,
-                          color: AppTheme.teal,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -169,7 +170,10 @@ class TripListScreen extends StatelessWidget {
                     cart.unpricedCount > 0
                         ? '${cart.unpricedCount} stays awaiting rates; excluded from total.'
                         : 'USD estimate. Final rates depend on dates and availability.',
-                    style: const TextStyle(fontSize: 11, color: AppTheme.muted),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
