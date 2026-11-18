@@ -1,7 +1,9 @@
+import 'package:equatable/equatable.dart';
+
 import '../utils/stored_json.dart';
 import 'hotel.dart';
 
-class TripItem {
+class TripItem extends Equatable {
   final Hotel hotel;
   final int nights;
 
@@ -10,6 +12,9 @@ class TripItem {
   TripItem withNights(int value) {
     return TripItem(hotel: hotel, nights: value);
   }
+
+  @override
+  List<Object?> get props => [hotel, nights];
 
   Map<String, dynamic> toSavedJson() => {
     'hotel': hotel.toSavedJson(),

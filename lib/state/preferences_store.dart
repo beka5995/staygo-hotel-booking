@@ -17,6 +17,7 @@ class PreferencesStore extends ChangeNotifier {
   static const themeKey = 'app_theme_dark_mode';
   static const nameKey = 'user_display_name';
   static const notesKey = 'user_notes_json';
+  static const signInEmailKey = 'last_sign_in_email';
   final SharedPreferences _preferences;
   bool _darkMode;
   String _displayName;
@@ -32,6 +33,7 @@ class PreferencesStore extends ChangeNotifier {
 
   bool get darkMode => _darkMode;
   String get displayName => _displayName;
+  String get lastSignInEmail => _preferences.getString(signInEmailKey) ?? '';
   List<NoteItem> get notes => List.unmodifiable(_notes);
   bool get isSaving => _saving;
   String? get error => _error;
@@ -117,6 +119,12 @@ class PreferencesStore extends ChangeNotifier {
       throw StateError('Save failed');
     }
     _displayName = name;
+  });
+
+  Future<bool> rememberSignInEmail(String email) => _enqueue(() async {
+    if (!await _preferences.setString(signInEmailKey, email)) {
+      throw StateError('Save failed');
+    }
   });
 
   Future<bool> addNote(String title) {

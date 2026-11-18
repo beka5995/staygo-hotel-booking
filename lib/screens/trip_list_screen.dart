@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../providers/cart_provider.dart';
+import '../state/cart_bloc.dart';
 import '../widgets/hotel_image.dart';
 
 class TripListScreen extends StatelessWidget {
   const TripListScreen({super.key});
   @override
-  Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+  Widget build(BuildContext context) =>
+      BlocBuilder<CartBloc, CartState>(builder: _buildCart);
+
+  Widget _buildCart(BuildContext context, CartState cart) {
+    final bloc = context.read<CartBloc>();
     final items = cart.items;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Trip List'),
         actions: [
           if (items.isNotEmpty)
-            TextButton(onPressed: cart.clear, child: const Text('Clear All')),
+            TextButton(
+              onPressed: () => bloc.add(const ClearCartEvent()),
+              child: const Text('Clear All'),
+            ),
         ],
       ),
       body: items.isEmpty
@@ -93,7 +99,8 @@ class TripListScreen extends StatelessWidget {
                             ),
                             IconButton(
                               tooltip: 'Remove item',
-                              onPressed: () => cart.removeHotel(hotel.id),
+                              onPressed: () =>
+                                  bloc.add(RemoveProductEvent(hotel.id)),
                               icon: const Icon(Icons.delete_outline),
                             ),
                           ],
@@ -110,7 +117,9 @@ class TripListScreen extends StatelessWidget {
                                 IconButton(
                                   tooltip: 'Decrease nights',
                                   onPressed: item.nights > 1
-                                      ? () => cart.changeNights(hotel.id, -1)
+                                      ? () => bloc.add(
+                                          ChangeNightsEvent(hotel.id, -1),
+                                        )
                                       : null,
                                   icon: const Icon(Icons.remove_circle_outline),
                                 ),
@@ -118,7 +127,9 @@ class TripListScreen extends StatelessWidget {
                                 IconButton(
                                   tooltip: 'Increase nights',
                                   onPressed: item.nights < 30
-                                      ? () => cart.changeNights(hotel.id, 1)
+                                      ? () => bloc.add(
+                                          ChangeNightsEvent(hotel.id, 1),
+                                        )
                                       : null,
                                   icon: const Icon(Icons.add_circle_outline),
                                 ),

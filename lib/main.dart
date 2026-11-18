@@ -4,9 +4,11 @@ import 'dart:ui' show PointerDeviceKind;
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart'
+    show MultiProvider, ChangeNotifierProvider;
 
-import 'providers/cart_provider.dart';
+import 'state/cart_bloc.dart';
 import 'models/hotel.dart';
 import 'models/trip_item.dart';
 import 'state/preferences_store.dart';
@@ -39,7 +41,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final _navigator = GlobalKey<NavigatorState>();
   late final HotelStore _store;
-  late final CartProvider _cart;
+  late final CartBloc _cart;
+  late final StreamSubscription<CartState> _cartSubscription;
   StreamSubscription<Uri>? _links;
   String? _lastLink;
   DateTime? _lastOpened;
@@ -51,15 +54,15 @@ class _MyAppState extends State<MyApp> {
     _store.restoreFavorites(
       widget.preferences.readItems('saved_favorites_json', Hotel.fromSavedJson),
     );
-    _cart = CartProvider(
+    _cart = CartBloc(
       initialItems: widget.preferences.readItems(
         'saved_cart_json',
         TripItem.fromSavedJson,
       ),
     );
-    _store.rememberItems(_cart.items.map((item) => item.hotel).toList());
+    _store.rememberItems(_cart.state.items.map((item) => item.hotel).toList());
     _store.addListener(_syncSelections);
-    _cart.addListener(_saveCart);
+    _cartSubscription = _cart.stream.listen(_saveCart);
 
     if (widget.enablePlatformServices && !kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _watchLinks());
@@ -99,11 +102,11 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _saveCart() {
+  void _saveCart(CartState state) {
     unawaited(
       widget.preferences.saveItems(
         'saved_cart_json',
-        _cart.items.map((item) => item.toSavedJson()).toList(),
+        state.items.map((item) => item.toSavedJson()).toList(),
       ),
     );
   }
@@ -116,7 +119,7 @@ class _MyAppState extends State<MyApp> {
       ),
     );
     if (_store.state == HotelLoadState.ready) {
-      _cart.updateHotels(_store.knownHotels);
+      _cart.add(UpdateHotelsEvent(_store.knownHotels));
     }
   }
 
@@ -124,8 +127,8 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     _links?.cancel();
     _store.removeListener(_syncSelections);
-    _cart.removeListener(_saveCart);
-    _cart.dispose();
+    unawaited(_cartSubscription.cancel());
+    unawaited(_cart.close());
     if (widget.store == null) _store.dispose();
     super.dispose();
   }
@@ -133,7 +136,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) => MultiProvider(
     providers: [
-      ChangeNotifierProvider<CartProvider>.value(value: _cart),
+      BlocProvider<CartBloc>.value(value: _cart),
       ChangeNotifierProvider<PreferencesStore>.value(value: widget.preferences),
     ],
     child: AnimatedBuilder(

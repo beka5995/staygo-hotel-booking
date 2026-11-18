@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/hotel.dart';
 import '../state/hotel_store.dart';
-import '../providers/cart_provider.dart';
+import '../state/cart_bloc.dart';
 import '../widgets/hotel_gallery.dart';
 import '../services/staygo_links.dart';
 
@@ -218,14 +218,18 @@ class _HotelScreenState extends State<HotelScreen> {
         ),
         bottomNavigationBar: SafeArea(
           minimum: const EdgeInsets.fromLTRB(18, 9, 18, 12),
-          child: Consumer<CartProvider>(
-            builder: (context, cart, _) => Row(
+          child: BlocBuilder<CartBloc, CartState>(
+            builder: (context, cart) => Row(
               children: [
                 Expanded(
                   child: SizedBox(
                     height: 52,
                     child: FilledButton.icon(
-                      onPressed: () => cart.toggleHotel(hotel),
+                      onPressed: () => context.read<CartBloc>().add(
+                        cart.containsHotel(hotel.id)
+                            ? RemoveProductEvent(hotel.id)
+                            : AddProductEvent(hotel),
+                      ),
                       icon: Icon(
                         cart.containsHotel(hotel.id)
                             ? Icons.check_circle_outline

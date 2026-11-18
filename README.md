@@ -55,17 +55,6 @@ Hotel cards appear as soon as the directory arrives. Rates load independently in
 
 Directory and rates: [Xotelo documentation](https://xotelo.com/), API base `https://data.xotelo.com/api`. Property images are URLs supplied by Xotelo. The main hero is AI-generated artwork in `assets/branding/`; it is not a specific hotel listing.
 
-## Coursework map
-
-| Lab | Implementation |
-| --- | --- |
-| 5 | `screens/hotel_screen.dart`, `widgets/hotel_gallery.dart` |
-| 6 | `screens/registration_screen.dart`, `database/local_auth.dart` |
-| 7 | `screens/home_screen.dart`, `screens/hotel_screen.dart` |
-| 8 | `screens/discover_screen.dart`, `state/hotel_store.dart` |
-| 9 | `providers/cart_provider.dart`, `screens/trip_list_screen.dart`, Provider above MaterialApp |
-| 10 | `services/hotel_places_service.dart`, `models/hotel.dart`, `models/hotel_rate.dart`, gallery and share links |
-
 ## Validation
 
 ```powershell
@@ -77,7 +66,7 @@ flutter build web
 
 Or run `powershell -ExecutionPolicy Bypass -File .\check_project.ps1`.
 
-Tests use mocked responses, not the live directory or an offline fallback in the app. They cover numeric conversion, HTTP errors, rates, real refresh logic, offline invalidation, UNDO/reset, cart synchronization, navigation, gallery and responsive layouts. See `PROJECT_CHECK.md` for what was actually verified before delivery. See LAB11_CHECK.md for the current verification results. Re-run the commands after local changes. Native device execution and Chrome end-to-end interaction still require local checks; no precompiled application is included.
+Catalog tests use mocked HTTP responses and cover offline handling, refresh, navigation and responsive layouts.
 
 For native link verification with the app installed:
 
@@ -88,8 +77,12 @@ adb shell am start -a android.intent.action.VIEW -d "narxoz://store/product/g293
 Favorites and Trip List are saved locally, including the number of nights. SQLite preserves accounts and the active account. This is a student travel planner without a production booking backend.
 
 
-## LAB 11: local notes and settings
+## Account and shopping state
 
-The Notes button in the upper-right app bar, beside the cart, opens a persisted Dark/Light switch, display name and note checklist. SharedPreferences is loaded before runApp; all note mutations serialize the list to one JSON string. See `LAB11_RU.md` for source locations and the real force-quit verification steps. Passwords/tokens are not stored in preferences. Catalog network behavior from LAB 10 is preserved.
+Register or sign in from Profile. After signing in, the app opens the catalog.
+Accounts are stored locally in SQLite. AuthCubit handles the asynchronous login
+states. CartBloc receives add, remove and clear events and shares the current
+selections, count and total across screens.
 
-For Chrome, use `powershell -ExecutionPolicy Bypass -File .\run_web.ps1`; a fixed app-specific port keeps the browser storage origin stable across launches. Account authentication remains in SQLite. LAB 11 persists theme, display name, notes, favorites and cart/trip selections. The bottom navigation has three tabs; Notes opens as a separate screen and Back restores the previous tab.
+Open Notes from the top bar to manage your display name, theme and notes.
+The app stores these settings, favorites and shopping selections on the device.

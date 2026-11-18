@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../database/local_auth.dart';
-import '../models/user_profile.dart';
+import '../state/auth_cubit.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key, this.initialRegister = true});
+  const RegistrationScreen({
+    super.key,
+    this.initialRegister = true,
+    this.initialEmail = '',
+  });
 
   final bool initialRegister;
+  final String initialEmail;
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -16,7 +21,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _name = TextEditingController();
-  final _email = TextEditingController();
+  late final TextEditingController _email;
   final _password = TextEditingController();
   final _confirm = TextEditingController();
 
@@ -25,7 +30,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _acceptedTerms = false;
   bool _termsError = false;
   bool _hidePassword = true;
-  bool _busy = false;
 
   String _role = 'Traveler';
 
@@ -33,6 +37,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void initState() {
     super.initState();
     _registerMode = widget.initialRegister;
+    _email = TextEditingController(text: widget.initialEmail);
   }
 
   @override
@@ -57,7 +62,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _formKey.currentState?.reset();
   }
 
-  Future<void> _submit() async {
+  void _submit(BuildContext context) {
     final valid = _formKey.currentState!.validate();
 
     setState(() {
@@ -66,272 +71,277 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     if (!valid || _termsError) return;
 
-    setState(() => _busy = true);
-
-    try {
-      final UserProfile profile;
-
-      if (_registerMode) {
-        profile = await LocalAuth.instance.register(
-          name: _name.text,
-          email: _email.text,
-          password: _password.text,
-          role: _role,
-        );
-      } else {
-        profile = await LocalAuth.instance.login(
-          email: _email.text,
-          password: _password.text,
-        );
-      }
-
-      debugPrint(
-        'Account ready: name=${profile.fullName}, email=${profile.email}, role=${profile.role}',
+    final cubit = context.read<AuthCubit>();
+    if (_registerMode) {
+      cubit.register(
+        name: _name.text,
+        email: _email.text,
+        password: _password.text,
+        role: _role,
       );
-      if (!mounted) return;
+    } else {
+      cubit.login(_email.text, _password.text);
+    }
+  }
 
-      Navigator.of(context).pop(profile);
-    } on StateError catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message.toString())));
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Something went wrong')));
-    } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
+  void _onAuthState(BuildContext context, AuthState state) {
+    if (state is AuthError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.message),
+          backgroundColor: Colors.red.shade800,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    if (state is AuthSuccess) {
+      Navigator.of(context).pop(state.account);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_registerMode ? 'Create account' : 'Sign in')),
-      body: Column(
-        children: [
-          Expanded(
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 10),
-                    Text(
-                      _registerMode ? 'Welcome to StayGo' : 'Welcome back',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _registerMode
-                          ? 'Create your travel account'
-                          : 'Sign in to your travel account',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 25),
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => AuthCubit(),
+    child: BlocConsumer<AuthCubit, AuthState>(
+      listener: _onAuthState,
+      builder: (context, state) => _buildForm(context, state is AuthLoading),
+    ),
+  );
 
-                    if (_registerMode) ...[
+  Widget _buildForm(BuildContext context, bool busy) {
+    return PopScope(
+      canPop: !busy,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_registerMode ? 'Create account' : 'Sign in'),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        _registerMode ? 'Welcome to StayGo' : 'Welcome back',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _registerMode
+                            ? 'Create your travel account'
+                            : 'Sign in to your travel account',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 25),
+
+                      if (_registerMode) ...[
+                        TextFormField(
+                          controller: _name,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Full name',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your full name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+
                       TextFormField(
-                        controller: _name,
-                        textCapitalization: TextCapitalization.words,
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Full name',
-                          prefixIcon: Icon(Icons.person_outline),
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your full name';
+                          final email = (value ?? '').trim();
+
+                          if (email.isEmpty) {
+                            return 'Please enter your email';
                           }
+
+                          if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                              .hasMatch(email)) {
+                            return 'Enter a valid email address';
+                          }
+
                           return null;
                         },
                       ),
+
                       const SizedBox(height: 14),
-                    ],
 
-                    TextFormField(
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: (value) {
-                        final email = (value ?? '').trim();
-
-                        if (email.isEmpty) {
-                          return 'Please enter your email';
-                        }
-
-                        if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                            .hasMatch(email)) {
-                          return 'Enter a valid email address';
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    TextFormField(
-                      controller: _password,
-                      obscureText: _hidePassword,
-                      onChanged: (_) {
-                        if (_registerMode && _confirm.text.isNotEmpty) {
-                          _formKey.currentState?.validate();
-                        }
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _hidePassword = !_hidePassword;
-                            });
-                          },
-                          icon: Icon(
-                            _hidePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        }
-
-                        if (_registerMode && value.length < 6) {
-                          return 'Password must have at least 6 characters';
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    if (_registerMode) ...[
-                      const SizedBox(height: 14),
                       TextFormField(
-                        controller: _confirm,
+                        controller: _password,
                         obscureText: _hidePassword,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirm password',
-                          prefixIcon: Icon(Icons.lock_reset_outlined),
+                        onChanged: (_) {
+                          if (_registerMode && _confirm.text.isNotEmpty) {
+                            _formKey.currentState?.validate();
+                          }
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _hidePassword = !_hidePassword;
+                              });
+                            },
+                            icon: Icon(
+                              _hidePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
+                            return 'Please enter a password';
                           }
 
-                          if (value != _password.text) {
-                            return 'Passwords do not match';
+                          if (_registerMode && value.length < 6) {
+                            return 'Password must have at least 6 characters';
                           }
 
                           return null;
                         },
                       ),
 
-                      const SizedBox(height: 14),
+                      if (_registerMode) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _confirm,
+                          obscureText: _hidePassword,
+                          decoration: const InputDecoration(
+                            labelText: 'Confirm password',
+                            prefixIcon: Icon(Icons.lock_reset_outlined),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm your password';
+                            }
 
-                      DropdownButtonFormField<String>(
-                        initialValue: _role,
-                        decoration: const InputDecoration(
-                          labelText: 'Account type',
+                            if (value != _password.text) {
+                              return 'Passwords do not match';
+                            }
+
+                            return null;
+                          },
                         ),
-                        items:
-                            ['Traveler', 'Business traveler', 'Travel planner']
-                                .map(
-                                  (role) => DropdownMenuItem(
-                                    value: role,
-                                    child: Text(role),
+
+                        const SizedBox(height: 14),
+
+                        DropdownButtonFormField<String>(
+                          initialValue: _role,
+                          decoration: const InputDecoration(
+                            labelText: 'Account type',
+                          ),
+                          items:
+                              [
+                                    'Traveler',
+                                    'Business traveler',
+                                    'Travel planner',
+                                  ]
+                                  .map(
+                                    (role) => DropdownMenuItem(
+                                      value: role,
+                                      child: Text(role),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _role = value ?? 'Traveler';
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _acceptedTerms,
+                          title: const Text(
+                            'I accept the Terms and Conditions',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _acceptedTerms = value ?? false;
+                              _termsError = false;
+                            });
+                          },
+                        ),
+
+                        if (_termsError)
+                          const Text(
+                            'Please accept the Terms and Conditions',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                      ],
+
+                      const SizedBox(height: 16),
+
+                      SizedBox(
+                        height: 50,
+                        child: busy
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
-                                )
-                                .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _role = value ?? 'Traveler';
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        value: _acceptedTerms,
-                        title: const Text(
-                          'I accept the Terms and Conditions',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _acceptedTerms = value ?? false;
-                            _termsError = false;
-                          });
-                        },
-                      ),
-
-                      if (_termsError)
-                        const Text(
-                          'Please accept the Terms and Conditions',
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                    ],
-
-                    const SizedBox(height: 16),
-
-                    SizedBox(
-                      height: 50,
-                      child: FilledButton(
-                        onPressed: _busy ? null : _submit,
-                        child: _busy
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
                                 ),
                               )
-                            : Text(
-                                _registerMode ? 'Create account' : 'Sign in',
+                            : FilledButton(
+                                onPressed: () => _submit(context),
+                                child: Text(
+                                  _registerMode ? 'Create account' : 'Sign in',
+                                ),
                               ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-              child: SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: _busy ? null : _switchMode,
-                  child: Text(
-                    _registerMode
-                        ? 'Already have an account? Sign in'
-                        : 'New to StayGo? Create account',
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: busy ? null : _switchMode,
+                    child: Text(
+                      _registerMode
+                          ? 'Already have an account? Sign in'
+                          : 'New to StayGo? Create account',
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

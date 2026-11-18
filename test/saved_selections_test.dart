@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:final_project_android_hotelbooking/main.dart';
 import 'package:final_project_android_hotelbooking/state/preferences_store.dart';
-import 'package:final_project_android_hotelbooking/providers/cart_provider.dart';
+import 'package:final_project_android_hotelbooking/state/cart_bloc.dart';
 import 'package:final_project_android_hotelbooking/models/hotel.dart';
 import 'package:final_project_android_hotelbooking/models/trip_item.dart';
 import 'package:final_project_android_hotelbooking/state/hotel_store.dart';
@@ -112,11 +112,9 @@ void main() {
       await tester.pumpAndSettle();
       final model = store.hotels.first;
       store.toggleFavorite(model);
-      var cart = tester
-          .element(find.byType(Scaffold).first)
-          .read<CartProvider>();
-      cart.toggleHotel(model);
-      cart.changeNights(model.id, 2);
+      var cart = tester.element(find.byType(Scaffold).first).read<CartBloc>();
+      cart.add(AddProductEvent(model));
+      cart.add(ChangeNightsEvent(model.id, 2));
       await tester.pumpAndSettle();
       await local.pendingWrites;
       final disk = await SharedPreferences.getInstance();
@@ -131,12 +129,12 @@ void main() {
         MyApp(preferences: local, store: store, enablePlatformServices: false),
       );
       await tester.pumpAndSettle();
-      cart = tester.element(find.byType(Scaffold).first).read<CartProvider>();
+      cart = tester.element(find.byType(Scaffold).first).read<CartBloc>();
       expect(store.hotels, isEmpty);
       expect(store.favorites.single.id, model.id);
-      expect(cart.itemCount, 1);
-      expect(cart.items.single.nights, 3);
-      cart.clear();
+      expect(cart.state.count, 1);
+      expect(cart.state.items.single.nights, 3);
+      cart.add(const ClearCartEvent());
       store.toggleFavorite(store.favorites.single);
       await tester.pumpAndSettle();
       await local.pendingWrites;

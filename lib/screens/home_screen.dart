@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../database/local_auth.dart';
 import '../models/hotel.dart';
 import '../models/user_profile.dart';
-import '../providers/cart_provider.dart';
+import '../state/cart_bloc.dart';
 import '../state/hotel_store.dart';
 import 'discover_screen.dart';
 import 'favorites_screen.dart';
@@ -136,21 +136,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   );
 
   Future<void> _openAuth(bool register) async {
+    final preferences = context.read<PreferencesStore>();
     final profile = await Navigator.push<UserProfile>(
       context,
       MaterialPageRoute<UserProfile>(
-        builder: (_) => RegistrationScreen(initialRegister: register),
+        builder: (_) => RegistrationScreen(
+          initialRegister: register,
+          initialEmail: register ? '' : preferences.lastSignInEmail,
+        ),
       ),
     );
     if (!mounted || profile == null) return;
-    setState(() => _profile = profile);
+    if (profile.email != preferences.lastSignInEmail) {
+      await preferences.rememberSignInEmail(profile.email);
+    }
+    if (!mounted) return;
+    setState(() {
+      _profile = profile;
+      _selectedTab = 0;
+    });
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Welcome to StayGo!')));
   }
 
   Future<void> _signOut() async {
+    final preferences = context.read<PreferencesStore>();
+    final email = _profile?.email;
     try {
       await LocalAuth.instance.logout();
+      // Covers accounts whose active session was created before email prefill.
+      if (email != null && email != preferences.lastSignInEmail) {
+        await preferences.rememberSignInEmail(email);
+      }
       if (mounted) setState(() => _profile = null);
     } catch (_) {
       if (mounted) {
@@ -206,10 +223,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
 
-        Consumer<CartProvider>(
-          builder: (context, cart, _) => Badge(
-            isLabelVisible: cart.itemCount > 0,
-            label: Text('${cart.itemCount}'),
+        BlocBuilder<CartBloc, CartState>(
+          builder: (context, cart) => Badge(
+            isLabelVisible: cart.count > 0,
+            label: Text('${cart.count}'),
             child: IconButton(
               tooltip: 'Trip List',
               icon: const Icon(Icons.luggage_outlined),

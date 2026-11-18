@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/hotel.dart';
-import '../providers/cart_provider.dart';
+import '../state/cart_bloc.dart';
 import '../services/hotel_places_service.dart';
 import '../state/hotel_store.dart';
 import '../widgets/hotel_card.dart';
@@ -142,7 +142,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+    final cart = context.watch<CartBloc>().state;
     return AnimatedBuilder(
       animation: widget.store,
       builder: (context, _) {
@@ -407,11 +407,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-  Widget _tripButton(Hotel hotel, CartProvider cart) => SizedBox(
+  Widget _tripButton(Hotel hotel, CartState cart) => SizedBox(
     width: double.infinity,
     height: 34,
     child: TextButton.icon(
-      onPressed: () => cart.toggleHotel(hotel),
+      onPressed: () => context.read<CartBloc>().add(
+        cart.containsHotel(hotel.id)
+            ? RemoveProductEvent(hotel.id)
+            : AddProductEvent(hotel),
+      ),
       icon: Icon(
         cart.containsHotel(hotel.id)
             ? Icons.check_circle_outline
@@ -429,7 +433,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     ),
   );
 
-  Widget _grid(List<Hotel> hotels, CartProvider cart) => RefreshIndicator(
+  Widget _grid(List<Hotel> hotels, CartState cart) => RefreshIndicator(
     onRefresh: _refresh,
     triggerMode: RefreshIndicatorTriggerMode.anywhere,
     child: GridView.builder(
@@ -464,7 +468,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     ),
   );
 
-  Widget _list(List<Hotel> hotels, CartProvider cart) => RefreshIndicator(
+  Widget _list(List<Hotel> hotels, CartState cart) => RefreshIndicator(
     onRefresh: _refresh,
     triggerMode: RefreshIndicatorTriggerMode.anywhere,
     child: ListView.separated(
