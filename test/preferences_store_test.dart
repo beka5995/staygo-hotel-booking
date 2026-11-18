@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:final_project_android_hotelbooking/models/note_item.dart';
-import 'package:final_project_android_hotelbooking/state/preferences_store.dart';
+import 'package:final_project/models/note_item.dart';
+import 'package:final_project/state/preferences_store.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));

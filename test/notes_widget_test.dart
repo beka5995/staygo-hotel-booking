@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:final_project_android_hotelbooking/main.dart';
-import 'package:final_project_android_hotelbooking/state/preferences_store.dart';
-import 'package:final_project_android_hotelbooking/state/hotel_store.dart';
+import 'package:final_project/main.dart';
+import 'package:final_project/state/preferences_store.dart';
 
-import 'support/fixtures.dart';
+import 'fixtures/catalog.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> mount(WidgetTester tester, PreferencesStore local) async {
-    final store = HotelStore(service: fixtureService());
+    final store = testStore();
     addTearDown(store.dispose);
     await tester.pumpWidget(
-      MyApp(preferences: local, store: store, enablePlatformServices: false),
+      SneakersApp(
+        preferences: local,
+        store: store,
+        enablePlatformServices: false,
+      ),
     );
   }
 

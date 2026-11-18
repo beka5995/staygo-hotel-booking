@@ -1,11 +1,11 @@
 {
-    "name": "StayGo",
-    "short_name": "StayGo",
+    "name": "SneakShop",
+    "short_name": "SneakShop",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#007F78",
-    "theme_color": "#007F78",
-    "description": "Find stays and plan your next trip.",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

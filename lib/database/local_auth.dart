@@ -1,33 +1,25 @@
-import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/foundation.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
-import '../models/user_profile.dart';
+import '../models/account.dart';
 
 class LocalAuth {
   LocalAuth._();
 
   static final instance = LocalAuth._();
+  Database? _db;
 
-  Future<Database>? _databaseFuture;
+  Future<Database> get database async {
+    if (_db != null) return _db!;
 
-  Future<Database> get database {
-    return _databaseFuture ??= _open();
-  }
+    final path = kIsWeb
+        ? 'sneakshop.db'
+        : join(await getDatabasesPath(), 'sneakshop.db');
 
-  Future<Database> _open() async {
-    if (kIsWeb) {
-      databaseFactory = databaseFactoryFfiWeb;
-    }
-
-    final dbPath = kIsWeb
-        ? 'staygo.db'
-        : join(await getDatabasesPath(), 'staygo.db');
-
-    return openDatabase(
-      dbPath,
+    _db = await openDatabase(
+      path,
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
@@ -48,39 +40,43 @@ class LocalAuth {
         ''');
       },
     );
+
+    return _db!;
   }
 
-  UserProfile _toProfile(Map<String, Object?> row) {
-    return UserProfile(
+  Account _account(Map<String, Object?> row) {
+    return Account(
       fullName: row['name'] as String,
       email: row['email'] as String,
       role: row['role'] as String,
     );
   }
 
-  Future<void> _saveSession(int id) async {
+  Future<void> _saveSession(int userId) async {
     final db = await database;
 
-    await db.insert('active_session', {
-      'slot': 1,
-      'user_id': id,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+        'active_session',
+        {
+          'slot': 1,
+          'user_id': userId,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<UserProfile> register({
+  Future<Account> register({
     required String name,
     required String email,
     required String password,
     required String role,
   }) async {
     final db = await database;
-    final normalizedEmail = email.trim().toLowerCase();
+    email = email.trim().toLowerCase();
 
     final existing = await db.query(
       'users',
       where: 'email = ?',
-      whereArgs: [normalizedEmail],
-      limit: 1,
+      whereArgs: [email],
     );
 
     if (existing.isNotEmpty) {
@@ -91,24 +87,17 @@ class LocalAuth {
 
     final id = await db.insert('users', {
       'name': name.trim(),
-      'email': normalizedEmail,
+      'email': email,
       'password_hash': passwordHash,
       'role': role,
     });
 
     await _saveSession(id);
 
-    return UserProfile(
-      fullName: name.trim(),
-      email: normalizedEmail,
-      role: role,
-    );
+    return Account(fullName: name.trim(), email: email, role: role);
   }
 
-  Future<UserProfile> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<Account> login(String email, String password) async {
     final db = await database;
 
     final users = await db.query(
@@ -130,25 +119,23 @@ class LocalAuth {
     }
 
     await _saveSession(user['id'] as int);
-
-    return _toProfile(user);
+    return _account(user);
   }
 
-  Future<UserProfile?> currentProfile() async {
+  Future<Account?> currentAccount() async {
     final db = await database;
 
-    final users = await db.rawQuery('''
+    final rows = await db.rawQuery('''
       SELECT users.name, users.email, users.role
       FROM users
-      INNER JOIN active_session
+      JOIN active_session
       ON users.id = active_session.user_id
       WHERE active_session.slot = 1
       LIMIT 1
     ''');
 
-    if (users.isEmpty) return null;
-
-    return _toProfile(users.first);
+    if (rows.isEmpty) return null;
+    return _account(rows.first);
   }
 
   Future<void> logout() async {

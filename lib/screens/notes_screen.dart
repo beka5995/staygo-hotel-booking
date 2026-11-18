@@ -44,8 +44,8 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Future<void> _saveName() async {
     final saved = await context.read<PreferencesStore>().saveDisplayName(
-      _name.text,
-    );
+          _name.text,
+        );
     if (!mounted || !saved) return;
     _name.text = context.read<PreferencesStore>().displayName;
     ScaffoldMessenger.of(context)
@@ -71,12 +71,14 @@ class _NotesScreenState extends State<NotesScreen> {
                     Text(
                       'Hello, ${local.displayName}',
                       key: const ValueKey('saved-name-header'),
-                      style: Theme.of(context).textTheme.headlineSmall
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Keep your travel plans and little reminders in one place.',
+                      'Plan your next pair and keep your shopping notes here.',
                       style: TextStyle(color: colors.onSurfaceVariant),
                     ),
                     const SizedBox(height: 16),
@@ -137,8 +139,10 @@ class _NotesScreenState extends State<NotesScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Travel notes',
-                      style: Theme.of(context).textTheme.titleLarge
+                      'Shopping notes',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 10),
@@ -152,7 +156,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         labelText: 'New note',
-                        hintText: 'Pack my passport for the trip',
+                        hintText: 'Try the white sneakers in size 42',
                         errorText: _noteError,
                       ),
                       onSubmitted: (_) {
