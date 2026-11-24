@@ -14,6 +14,13 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+
+    if (name == "camera_android_camerax") {
+        plugins.withId("com.android.library") {
+            // CameraX 1.5.3 exposes this runtime dependency to javac through its annotations.
+            dependencies.add("implementation", "androidx.concurrent:concurrent-futures:1.2.0")
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")

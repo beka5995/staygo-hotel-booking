@@ -4,33 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:final_project/main.dart';
-import 'package:final_project/state/preferences_store.dart';
-import 'package:final_project/state/cart_bloc.dart';
-import 'package:final_project/models/product.dart';
-import 'package:final_project/models/cart_item.dart';
+import 'package:final_project_android_hotelbooking/main.dart';
+import 'package:final_project_android_hotelbooking/state/preferences_store.dart';
+import 'package:final_project_android_hotelbooking/state/cart_bloc.dart';
+import 'package:final_project_android_hotelbooking/models/hotel.dart';
+import 'package:final_project_android_hotelbooking/models/trip_item.dart';
+import 'package:final_project_android_hotelbooking/state/hotel_store.dart';
 
-import 'fixtures/catalog.dart';
+import 'support/fixtures.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   test('Saved objects preserve fields and item options and reject corrupt quantities', () {
-    final item = CartItem(product: sampleProducts.first, size: 41, quantity: 2);
-    final restored = CartItem.fromSavedJson(
+    final item = TripItem(hotel: hotelFixture(0), nights: 3);
+    final restored = TripItem.fromSavedJson(
       jsonDecode(jsonEncode(item.toSavedJson())) as Map<String, dynamic>,
     );
     expect(restored.toSavedJson(), item.toSavedJson());
     expect(
-      () => CartItem.fromSavedJson({...item.toSavedJson(), 'quantity': 0}),
+      () => TripItem.fromSavedJson({...item.toSavedJson(), 'nights': 0}),
       throwsFormatException,
     );
   });
 
   test('Malformed selection entries are skipped without losing valid saved objects', () async {
-    final model = sampleProducts.first;
+    final model = hotelFixture(0);
     SharedPreferences.setMockInitialValues({
       'saved_favorites_json': jsonEncode([
         model.toSavedJson(),
@@ -39,7 +38,7 @@ void main() {
     });
     final local = await PreferencesStore.load();
     expect(
-      local.readItems('saved_favorites_json', Product.fromSavedJson),
+      local.readItems('saved_favorites_json', Hotel.fromSavedJson),
       hasLength(1),
     );
     expect(local.error, isNotNull);
@@ -50,13 +49,13 @@ void main() {
     final local = await PreferencesStore.load();
     await Future.wait([
       local.saveItems('saved_favorites_json', [
-        (sampleProducts.first).toSavedJson(),
+        (hotelFixture(0)).toSavedJson(),
       ]),
       local.saveItems('saved_favorites_json', []),
     ]);
     final restored = await PreferencesStore.load();
     expect(
-      restored.readItems('saved_favorites_json', Product.fromSavedJson),
+      restored.readItems('saved_favorites_json', Hotel.fromSavedJson),
       isEmpty,
     );
     local.dispose();
@@ -64,28 +63,24 @@ void main() {
   });
 
   testWidgets(
-    'Notes is a top action, bottom menu has three tabs and Back retains Profile',
+    'Notes is a top action, bottom menu has five destinations and Back retains Profile',
     (tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final local = await PreferencesStore.load();
-      final store = testStore();
+      final store = HotelStore(service: fixtureService());
       await tester.pumpWidget(
-        SneakersApp(
-          preferences: local,
-          store: store,
-          enablePlatformServices: false,
-        ),
+        MyApp(preferences: local, store: store, enablePlatformServices: false),
       );
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
-            .items
+            .widget<NavigationBar>(find.byType(NavigationBar))
+            .destinations
             .length,
-        3,
+        5,
       );
       expect(find.byTooltip('Notes'), findsOneWidget);
       await tester.tap(find.text('Profile'));
@@ -96,10 +91,8 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(
-        tester
-            .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
-            .currentIndex,
-        2,
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        4,
       );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -112,21 +105,16 @@ void main() {
     'Cart and favorites restore offline with options and removal stays saved',
     (tester) async {
       var local = await PreferencesStore.load();
-      var store = testStore();
+      var store = HotelStore(service: fixtureService());
       await tester.pumpWidget(
-        SneakersApp(
-          preferences: local,
-          store: store,
-          enablePlatformServices: false,
-        ),
+        MyApp(preferences: local, store: store, enablePlatformServices: false),
       );
       await tester.pumpAndSettle();
-      final model = store.products.first;
-      store.toggleFavorite(model.id);
+      final model = store.hotels.first;
+      store.toggleFavorite(model);
       var cart = tester.element(find.byType(Scaffold).first).read<CartBloc>();
-      cart.add(AddProductEvent(model, size: 41));
-      cart.add(AddProductEvent(model, size: 41));
-      cart.add(AddProductEvent(model, size: 42));
+      cart.add(AddProductEvent(model));
+      cart.add(ChangeNightsEvent(model.id, 2));
       await tester.pumpAndSettle();
       await local.pendingWrites;
       final disk = await SharedPreferences.getInstance();
@@ -136,33 +124,26 @@ void main() {
       local.dispose();
       SharedPreferences.setMockInitialValues(snapshot);
       local = await PreferencesStore.load();
-      store = testStore(
-        client: MockClient((_) async => throw http.ClientException('offline')),
-      );
+      store = HotelStore(service: fixtureService(offline: () => true));
       await tester.pumpWidget(
-        SneakersApp(
-          preferences: local,
-          store: store,
-          enablePlatformServices: false,
-        ),
+        MyApp(preferences: local, store: store, enablePlatformServices: false),
       );
       await tester.pumpAndSettle();
       cart = tester.element(find.byType(Scaffold).first).read<CartBloc>();
-      expect(store.products, isEmpty);
+      expect(store.hotels, isEmpty);
       expect(store.favorites.single.id, model.id);
-      expect(cart.state.count, 3);
-      expect(cart.state.items.map((i) => i.size), [41, 42]);
-      expect(cart.state.items.first.quantity, 2);
+      expect(cart.state.count, 1);
+      expect(cart.state.items.single.nights, 3);
       cart.add(const ClearCartEvent());
-      store.toggleFavorite(model.id);
+      store.toggleFavorite(store.favorites.single);
       await tester.pumpAndSettle();
       await local.pendingWrites;
       expect(
-        local.readItems('saved_cart_json', CartItem.fromSavedJson),
+        local.readItems('saved_cart_json', TripItem.fromSavedJson),
         isEmpty,
       );
       expect(
-        local.readItems('saved_favorites_json', Product.fromSavedJson),
+        local.readItems('saved_favorites_json', Hotel.fromSavedJson),
         isEmpty,
       );
       expect(tester.takeException(), isNull);

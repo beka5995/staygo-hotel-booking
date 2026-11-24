@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../database/local_auth.dart';
-import '../models/account.dart';
+import '../models/user_profile.dart';
 
 sealed class AuthState extends Equatable {
   const AuthState();
@@ -22,7 +22,7 @@ final class AuthLoading extends AuthState {
 final class AuthSuccess extends AuthState {
   const AuthSuccess(this.account);
 
-  final Account account;
+  final UserProfile account;
   String get username => account.fullName;
   String get email => account.email;
 
@@ -44,7 +44,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login(String email, String password) => _authenticate(() async {
     await Future<void>.delayed(const Duration(milliseconds: 650));
-    return LocalAuth.instance.login(email, password);
+    return LocalAuth.instance.login(email: email, password: password);
   });
 
   Future<void> register({
@@ -61,7 +61,7 @@ class AuthCubit extends Cubit<AuthState> {
     ),
   );
 
-  Future<void> _authenticate(Future<Account> Function() request) async {
+  Future<void> _authenticate(Future<UserProfile> Function() request) async {
     if (state is AuthLoading) return;
     emit(const AuthLoading());
     try {

@@ -1,86 +1,110 @@
 import 'package:flutter/material.dart';
 
-import '../state/store_controller.dart';
-import '../widgets/product_list_tile.dart';
-import 'product_detail_screen.dart';
+import '../models/hotel.dart';
+import '../widgets/hotel_result_tile.dart';
 
 class FavoritesScreen extends StatelessWidget {
-  final StoreController store;
-  const FavoritesScreen({super.key, required this.store});
+  const FavoritesScreen({
+    super.key,
+    required this.hotels,
+    required this.onHotelTap,
+    required this.onFavoriteTap,
+    required this.onExplore,
+    this.onTripAdd,
+  });
+
+  final List<Hotel> hotels;
+  final ValueChanged<Hotel> onHotelTap;
+  final ValueChanged<Hotel> onFavoriteTap;
+  final VoidCallback onExplore;
+  final ValueChanged<Hotel>? onTripAdd;
+
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-        animation: store,
-        builder: (context, _) {
-          final products = store.favorites;
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'Your favorites',
-                        style: TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      child: products.isEmpty
-                          ? const Center(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.favorite_border,
-                                      color: Colors.grey,
-                                      size: 55,
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text('Nothing saved yet'),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Tap the heart on a pair you like.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              itemCount: products.length,
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final product = products[index];
-                                return ProductListTile(
-                                  product: product,
-                                  favorite: true,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute<void>(
-                                      builder: (_) => ProductDetailScreen(
-                                        product: product,
-                                        store: store,
-                                      ),
-                                    ),
-                                  ),
-                                  onFavorite: () =>
-                                      store.toggleFavorite(product.id),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Your favorites',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            ),
-          );
-        },
-      );
+              const SizedBox(height: 5),
+              Text(
+                'Hotels you want to come back to',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: hotels.isEmpty
+              ? Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.favorite_border_rounded,
+                          size: 67,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'No favorites yet',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          'Tap the heart on a hotel to save it here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 17),
+                        FilledButton(
+                          onPressed: onExplore,
+                          child: const Text('Explore hotels'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+                  itemCount: hotels.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final hotel = hotels[index];
+                    return HotelResultTile(
+                      key: ValueKey(hotel.id),
+                      hotel: hotel,
+                      isFavorite: true,
+                      onTap: () => onHotelTap(hotel),
+                      onFavorite: () => onFavoriteTap(hotel),
+                      onTripAdd: () => onTripAdd?.call(hotel),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
 }

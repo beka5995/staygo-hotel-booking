@@ -2,26 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>FlutterDeepLinkingEnabled</key>
-    <false/>
-    <key>CFBundleURLTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleURLName</key>
-        <string>SneakShop links</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>sneakshop</string>
-          <string>narxoz</string>
-        </array>
-      </dict>
-    </array>
+    <key>NSCameraUsageDescription</key>
+    <string>Take photos for your StayGo photo journal.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Choose photos for your StayGo photo journal.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Add your current location to a photo journal entry.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>SneakShop</string>
+	<string>StayGo</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>StayGo hotels</string>
+			<key>CFBundleURLSchemes</key>
+			<array><string>staygo</string><string>narxoz</string></array>
+		</dict>
+	</array>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -29,7 +32,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>final_project</string>
+	<string>StayGo</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

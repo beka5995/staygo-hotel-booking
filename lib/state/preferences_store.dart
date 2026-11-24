@@ -17,6 +17,7 @@ class PreferencesStore extends ChangeNotifier {
   static const themeKey = 'app_theme_dark_mode';
   static const nameKey = 'user_display_name';
   static const notesKey = 'user_notes_json';
+  static const signInEmailKey = 'last_sign_in_email';
   final SharedPreferences _preferences;
   bool _darkMode;
   String _displayName;
@@ -32,6 +33,7 @@ class PreferencesStore extends ChangeNotifier {
 
   bool get darkMode => _darkMode;
   String get displayName => _displayName;
+  String get lastSignInEmail => _preferences.getString(signInEmailKey) ?? '';
   List<NoteItem> get notes => List.unmodifiable(_notes);
   bool get isSaving => _saving;
   String? get error => _error;
@@ -105,19 +107,25 @@ class PreferencesStore extends ChangeNotifier {
   }
 
   Future<bool> setDarkMode(bool value) => _enqueue(() async {
-        if (!await _preferences.setBool(themeKey, value)) {
-          throw StateError('Save failed');
-        }
-        _darkMode = value;
-      });
+    if (!await _preferences.setBool(themeKey, value)) {
+      throw StateError('Save failed');
+    }
+    _darkMode = value;
+  });
 
   Future<bool> saveDisplayName(String value) => _enqueue(() async {
-        final name = value.trim().isEmpty ? 'Guest User' : value.trim();
-        if (!await _preferences.setString(nameKey, name)) {
-          throw StateError('Save failed');
-        }
-        _displayName = name;
-      });
+    final name = value.trim().isEmpty ? 'Guest User' : value.trim();
+    if (!await _preferences.setString(nameKey, name)) {
+      throw StateError('Save failed');
+    }
+    _displayName = name;
+  });
+
+  Future<bool> rememberSignInEmail(String email) => _enqueue(() async {
+    if (!await _preferences.setString(signInEmailKey, email)) {
+      throw StateError('Save failed');
+    }
+  });
 
   Future<bool> addNote(String title) {
     final text = title.trim();
@@ -134,14 +142,14 @@ class PreferencesStore extends ChangeNotifier {
   }
 
   Future<bool> toggleNote(String id) => _enqueue(
-        () => _saveNotes([
-          for (final note in _notes)
-            if (note.id == id) note.toggle() else note,
-        ]),
-      );
+    () => _saveNotes([
+      for (final note in _notes)
+        if (note.id == id) note.toggle() else note,
+    ]),
+  );
   Future<bool> deleteNote(String id) => _enqueue(
-        () => _saveNotes(_notes.where((note) => note.id != id).toList()),
-      );
+    () => _saveNotes(_notes.where((note) => note.id != id).toList()),
+  );
 
   // Saved user selections are independent from the live catalog feed.
   List<T> readItems<T>(String key, T Function(Map<String, dynamic>) decode) {

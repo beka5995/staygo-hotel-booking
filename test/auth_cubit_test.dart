@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:final_project/database/local_auth.dart';
-import 'package:final_project/state/auth_cubit.dart';
+import 'package:final_project_android_hotelbooking/database/local_auth.dart';
+import 'package:final_project_android_hotelbooking/state/auth_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -24,7 +24,7 @@ void main() {
       name: 'Test Account',
       email: 'user@example.com',
       password: 'test-password',
-      role: 'Shopper',
+      role: 'Traveler',
     );
     await auth.logout();
 
@@ -33,7 +33,7 @@ void main() {
     expect(cubit.state, const AuthLoading());
     await failure;
     expect(cubit.state, const AuthError('Incorrect email or password'));
-    expect(await auth.currentAccount(), isNull);
+    expect(await auth.currentProfile(), isNull);
 
     final success = cubit.login(' USER@example.com ', 'test-password');
     expect(cubit.state, const AuthLoading());
@@ -41,6 +41,6 @@ void main() {
     final signedIn = cubit.state as AuthSuccess;
     expect(signedIn.username, 'Test Account');
     expect(signedIn.email, 'user@example.com');
-    expect((await auth.currentAccount())?.email, signedIn.email);
+    expect((await auth.currentProfile())?.email, signedIn.email);
   });
 }

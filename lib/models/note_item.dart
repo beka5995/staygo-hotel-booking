@@ -11,11 +11,11 @@ class NoteItem {
   final bool isCompleted;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'dateText': dateText,
-        'isCompleted': isCompleted,
-      };
+    'id': id,
+    'title': title,
+    'dateText': dateText,
+    'isCompleted': isCompleted,
+  };
 
   factory NoteItem.fromJson(Map<String, dynamic> json) {
     if (json['id'] is! String ||
@@ -35,9 +35,9 @@ class NoteItem {
   }
 
   NoteItem toggle() => NoteItem(
-        id: id,
-        title: title,
-        dateText: dateText,
-        isCompleted: !isCompleted,
-      );
+    id: id,
+    title: title,
+    dateText: dateText,
+    isCompleted: !isCompleted,
+  );
 }
